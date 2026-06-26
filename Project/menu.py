@@ -11,7 +11,7 @@ repo_name, commit SHA, message/subject, parent SHA(s), tree SHA).
 
 Structure:
   Main Menu  →  1. Redis   (fully implemented)
-                2. MongoDB     (coming soon)
+                2. MongoDB     (fully implemented)
                 3. Cassandra   (coming soon)
                 4. Neo4j       (coming soon)
                 5. SQLite      (coming soon)
@@ -28,6 +28,9 @@ Usage:
 import json
 import redis_crud
 import redis_features
+import mongodb_crud
+import mongodb_features
+
 
 
 # ─────────────────────────────────────────
@@ -289,8 +292,71 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 
         else:
             print("  [WARN] Invalid choice. Please try again.")
+# =====================================================
+# MONGODB MENU 
+# =====================================================
 
+def run_mongodb_menu(data_filepath="Project/data/sample_repos.json"):
 
+    collection = mongodb_crud.connect_to_mongodb()
+
+    while True:
+
+        print("\n--- MONGODB MENU ---")
+        print("1 Load")
+        print("2 Read")
+        print("3 Update")
+        print("4 Delete")
+        print("5 List Repos")
+        print("6 Repo Lengths")
+        print("7 Top Watch Count")
+        print("8 Watch Analysis")
+        print("0 Back")
+
+        choice = input("Choice: ")
+
+        if choice == "1":
+
+            data = mongodb_crud.load_github_data(data_filepath)
+
+            mongodb_crud.bulk_create_commits(collection, data)
+
+        elif choice == "2":
+
+            name = input("Repo name: ")
+            print(mongodb_crud.read_commit(collection, name))
+
+        elif choice == "3":
+
+            name = input("Repo name: ")
+            field = input("Field: ")
+            value = input("Value: ")
+
+            mongodb_crud.update_commit(collection, name, {field: value})
+
+        elif choice == "4":
+
+            name = input("Repo name: ")
+            mongodb_crud.delete_commit(collection, name)
+
+        elif choice == "5":
+
+            print(mongodb_crud.list_all_commit_ids(collection))
+
+        elif choice == "6":
+
+            mongodb_features.display_repo_name_lengths(collection)
+
+        elif choice == "7":
+
+            mongodb_features.display_repository_distribution(collection)
+
+        elif choice == "8":
+
+            mongodb_features.display_common_commit_words(collection)
+
+        elif choice == "0":
+            break
 # ─────────────────────────────────────────
 #  MAIN LOOP
 # ─────────────────────────────────────────
@@ -299,7 +365,6 @@ def run_app():
     """
     Run the top-level database selection menu.
     Routes to the appropriate database submenu based on user choice.
-    Placeholder databases print a coming-soon message and return here.
     """
     while True:
         print_main_menu()
@@ -309,9 +374,17 @@ def run_app():
             # Redis — fully implemented
             run_redis_menu()
 
-        elif choice in ("2", "3", "4", "5"):
+        elif choice == "2":
+            # MongoDB — fully implemented
+            run_mongodb_menu()
+
+        elif choice in ("3", "4", "5"):
             # Placeholder databases — not yet implemented
-            db_names = {"2": "MongoDB", "3": "Cassandra", "4": "Neo4j", "5": "SQLite"}
+            db_names = {
+                "3": "Cassandra",
+                "4": "Neo4j",
+                "5": "SQLite"
+            }
             print(f"\n  [Option under construction] {db_names[choice]} coming soon.")
             print("  Returning to main menu...")
 
