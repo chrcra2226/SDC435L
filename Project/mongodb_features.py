@@ -1,7 +1,7 @@
 """
 mongodb_features.py
 =============================
-MongoDB analytics features (Week 2)
+MongoDB analytics features 
 Dataset: sample_repos.json
 Schema: repo_name, watch_count
 """
