@@ -39,11 +39,16 @@ def connect_to_mongodb(
 # LOAD DATA (sample_repos.json)
 # -----------------------------------------------------
 
-def load_github_data(filepath):
+def load_github_data(filepath="sample_repos.json"):
 
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
+
+        # Validate structure
+        for item in data:
+            if "repo_name" not in item or "watch_count" not in item:
+                raise ValueError("JSON must contain repo_name and watch_count")
 
         print(f"[OK] Loaded {len(data)} repositories")
         return data
@@ -54,60 +59,69 @@ def load_github_data(filepath):
 
 
 # -----------------------------------------------------
-# CREATE
+# CREATE (BULK INSERT)
 # -----------------------------------------------------
 
-def bulk_create_commits(collection, data):
+def bulk_create_repos(collection, data):
 
     if not collection or not data:
         return
 
-    collection.delete_many({})
+    collection.delete_many({})  # reset collection
     collection.insert_many(data)
 
-    print(f"[OK] Inserted {len(data)} records")
+    print(f"[OK] Inserted {len(data)} repositories")
 
 
 # -----------------------------------------------------
 # READ
 # -----------------------------------------------------
 
-def read_commit(collection, repo_name):
+def read_repo(collection, repo_name):
 
-    return collection.find_one({"repo_name": repo_name})
+    return collection.find_one(
+        {"repo_name": repo_name},
+        {"_id": 0}
+    )
 
 
 # -----------------------------------------------------
-# UPDATE
+# UPDATE (watch_count safe increment or set)
 # -----------------------------------------------------
 
-def update_commit(collection, repo_name, updates):
+def update_repo(collection, repo_name, updates):
 
     result = collection.update_one(
         {"repo_name": repo_name},
         {"$set": updates}
     )
 
-    print("[OK] Updated" if result.modified_count else "[WARN] Not found")
+    if result.modified_count:
+        print("[OK] Updated")
+    else:
+        print("[WARN] Repo not found")
 
 
 # -----------------------------------------------------
 # DELETE
 # -----------------------------------------------------
 
-def delete_commit(collection, repo_name):
+def delete_repo(collection, repo_name):
 
     result = collection.delete_one({"repo_name": repo_name})
 
-    print("[OK] Deleted" if result.deleted_count else "[WARN] Not found")
+    if result.deleted_count:
+        print("[OK] Deleted")
+    else:
+        print("[WARN] Repo not found")
 
 
 # -----------------------------------------------------
-# LIST IDS
+# LIST ALL REPOS
 # -----------------------------------------------------
 
-def list_all_commit_ids(collection, limit=20):
+def list_all_repos(collection, limit=20):
 
-    cursor = collection.find({}, {"repo_name": 1, "_id": 0}).limit(limit)
+    cursor = collection.find({}, {"repo_name": 1, "watch_count": 1, "_id": 0}).limit(limit)
 
-    return [doc["repo_name"] for doc in cursor]
+    return list(cursor)
