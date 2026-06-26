@@ -26,15 +26,15 @@ def display_repo_name_lengths(collection):
     shortest = min(names, key=len)
 
     print("\n=== Repository Name Analysis ===")
-    print(f"Longest: {longest}")
-    print(f"Shortest: {shortest}")
+    print(f"Longest repo name: {longest}")
+    print(f"Shortest repo name: {shortest}")
 
 
 # -----------------------------------------------------
 # FEATURE 2: TOP WATCHED REPOSITORIES
 # -----------------------------------------------------
 
-def display_repository_distribution(collection):
+def display_top_repositories(collection):
 
     if not collection:
         return
@@ -53,21 +53,21 @@ def display_repository_distribution(collection):
         repo = r.get("repo_name", "Unknown")
         watch = r.get("watch_count", 0)
 
-        bar = "█" * min(watch // 5, 30)
+        bar = "█" * min(watch // 2, 30)  # scaled better for display
 
         print(f"{i}. {repo:<35} {watch:<6} {bar}")
 
 
 # -----------------------------------------------------
-# FEATURE 3: WATCH STATISTICS
+# FEATURE 3: WATCH COUNT STATISTICS
 # -----------------------------------------------------
 
-def display_common_commit_words(collection):
+def display_watch_statistics(collection):
 
     if not collection:
         return
 
-    repos = list(collection.find({}, {"watch_count": 1}))
+    repos = list(collection.find({}, {"watch_count": 1, "_id": 0}))
 
     values = [r.get("watch_count", 0) for r in repos]
 
@@ -87,9 +87,12 @@ def display_common_commit_words(collection):
 
 
 # -----------------------------------------------------
-# OPTIONAL
+# OPTIONAL: TOTAL REPOSITORIES
 # -----------------------------------------------------
 
-def get_total_repos(collection):
+def get_total_repositories(collection):
 
-    return collection.count_documents
+    if not collection:
+        return 0
+
+    return collection.count_documents({})
