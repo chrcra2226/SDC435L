@@ -1,7 +1,7 @@
 """
 mongodb_crud.py
 =============================
-CRUD operations for MongoDB (Week 2)
+CRUD operations for MongoDB 
 Dataset: sample_repos.json
 Schema: repo_name, watch_count
 """
