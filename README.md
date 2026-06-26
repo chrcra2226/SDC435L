@@ -9,27 +9,29 @@ This Python application integrates with multiple database technologies to store 
 
 This is a five-part group project. Part 1 (Redis) and Part 2 (mongodb) are fully implemented. Parts 3–5 are placeholders and will be completed in future weeks.
 
-Part	Database	Type	Status
-1	Redis	Key-Value (In-Memory)	Complete
-2	MongoDB	Document	Complete (Week 2)
-3	Cassandra	Wide-Column	Under Construction
-4	Neo4j	Graph	Under Construction
-5	SQLite	Relational	Under Construction
+| Part | Database  | Type                  | Status            |
+|------|-----------|-----------------------|-------------------|
+| 1    | Redis     | Key-Value (In-Memory) | Complete          |
+| 2    | MongoDB   | Document              | completed         |
+| 3    | Cassandra | Wide-Column           | Under Construction|
+| 4    | Neo4j     | Graph                 | Under Construction|
+| 5    | SQLite    | Relational            | Under Construction|
+
 
 Dataset
 
 This application uses Commits.json from the provided GitHubArchive-Dataset.zip. Each line of the file is one JSON object describing a single Git commit, with fields including:
 
-Field	Description
-commit	The commit SHA — used as the unique Redis key
-author	{ "name": ..., "email": ... } — who wrote the commit
-committer	{ "name": ..., "email": ... } — who committed it
-repo_name	A list containing the repository name(s), e.g. ["owner/repo"]
-message	The full commit message
-subject	The first line of the commit message
-parent	A list of parent commit SHA(s)
-tree	The tree SHA
-
+| Field        | Description                                              |
+|--------------|------------------------------------------------------------|
+| `commit`     | The commit SHA — used as the unique Redis key              |
+| `author`     | `{ "name": ..., "email": ... }` — who wrote the commit      |
+| `committer`  | `{ "name": ..., "email": ... }` — who committed it          |
+| `repo_name`  | A **list** containing the repository name(s), e.g. `["owner/repo"]` |
+| `message`    | The full commit message                                    |
+| `subject`    | The first line of the commit message                       |
+| `parent`     | A list of parent commit SHA(s)                              |
+| `tree`       | The tree SHA                                                |
 The dataset ZIP also includes several other files (Files.json, Contents.json, Languages.json, Licenses.json, and Sample_* variants) describing repository file listings, file contents, language breakdowns, and license info. These are not used by the current Redis implementation but are used in later phases such as MongoDB.
 
 Project Structure
@@ -38,7 +40,7 @@ project/
 ├── menu.py               # Entry point — main menu and all submenus
 ├── redis_crud.py         # Redis: connection, data loading, CRUD operations
 ├── redis_features.py     # Redis: three analytical features
-├── mongodb_crud.py       # MongoDB: CRUD operations (Week 2)
+├── mongodb_crud.py       # MongoDB: CRUD operations 
 ├── mongodb_features.py   # MongoDB: three analytical features 
 ├── README.md             # This file
 └── data/
@@ -106,6 +108,7 @@ MongoDB Menu
 │
 └── 0. Back to main menu
 
+
 Part 1 — Redis Features
 
 CRUD Operations
@@ -127,14 +130,26 @@ Analyzes the first word of commit subject lines (e.g. Fix, Add, Update) and stor
 Feature 3 — Author Contribution History
 Tracks author commit activity using Redis lists and sorted sets to show top contributors and history.
 
-Redis Data Model
+## Redis Data Model
 
-Key Pattern	Redis Type	Description
-commit:<sha>	String (JSON)	Full commit object
-ranking:repos	Sorted Set	Repository commit counts
-ranking:commit_keywords	Sorted Set	Commit keyword frequency
-author:<name>:commits	List	Commit history per author
-ranking:authors	Sorted Set	Author leaderboard
+| Key Pattern              | Redis Type     | Description                                       |
+|---------------------------|----------------|----------------------------------------------------|
+| `commit:<sha>`             | String (JSON)  | Full commit object stored as serialized JSON       |
+| `ranking:repos`            | Sorted Set     | Repository names scored by total commit count      |
+| `ranking:commit_keywords`  | Sorted Set     | Commit subject keywords scored by frequency        |
+| `author:<name>:commits`    | List           | Ordered list of commit SHAs for a specific author  |
+| `ranking:authors`          | Sorted Set     | Author names scored by total commit count          |
+
+---
+
+## Technology Requirements
+
+| Requirement    | Details        |
+|----------------|----------------|
+| Language       | Python 3.8+    |
+| Database       | Redis 6.0+     |
+| Python Driver  | `redis-py`     |
+
 
 Part 2 — MongoDB Features
 
@@ -155,6 +170,8 @@ Groups repositories by programming language and counts occurrences
 
 Feature 3 — Repository Activity Summary
 Compares commits vs watch_count to evaluate repository engagement
+
+
 
 MongoDB Data Model
 
