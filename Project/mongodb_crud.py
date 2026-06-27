@@ -39,16 +39,27 @@ def connect_to_mongodb(
 # LOAD DATA (sample_repos.json)
 # -----------------------------------------------------
 
+import json
+
 def load_github_data(filepath="sample_Repos.json"):
+
+    data = []
 
     try:
         with open(filepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            for line in f:
+                line = line.strip()
+                if line:
+                    item = json.loads(line)
 
-        # Validate structure
-        for item in data:
-            if "repo_name" not in item or "watch_count" not in item:
-                raise ValueError("JSON must contain repo_name and watch_count")
+                    # Validate structure
+                    if "repo_name" not in item or "watch_count" not in item:
+                        raise ValueError("JSON must contain repo_name and watch_count")
+
+                    # convert watch_count to int (IMPORTANT)
+                    item["watch_count"] = int(item["watch_count"])
+
+                    data.append(item)
 
         print(f"[OK] Loaded {len(data)} repositories")
         return data
