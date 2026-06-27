@@ -298,9 +298,9 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 
 def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
-collection = mongodb_crud.connect_to_mongodb()
+   collection = mongodb_crud.connect_to_mongodb()
 if collection is None:
-print("Cannot connect to MongoDB.")
+  print("Cannot connect to MongoDB.")
 return
 
 while True:
@@ -323,81 +323,81 @@ choice = input("Choice: ")
 # -------------------------------------------------
 if choice == "1":
 
-data = mongodb_crud.load_github_data(data_filepath)
+   data = mongodb_crud.load_github_data(data_filepath)
 
 if data:
-mongodb_crud.bulk_create_repos(collection, data)
-print("[OK] MongoDB loaded from sample_repos.json")
+    mongodb_crud.bulk_create_repos(collection, data)
+    print("[OK] MongoDB loaded from sample_repos.json")
 else:
-print("[ERROR] No data loaded.")
+    print("[ERROR] No data loaded.")
 
 # -------------------------------------------------
 # READ ONE REPO
 # -------------------------------------------------
 elif choice == "2":
 
-name = input("Repo name: ")
-print(mongodb_crud.read_repo(collection, name))
+   name = input("Repo name: ")
+   print(mongodb_crud.read_repo(collection, name))
 
 # -------------------------------------------------
 # UPDATE REPO
 # -------------------------------------------------
 elif choice == "3":
 
-name = input("Repo name: ")
-field = input("Field (repo_name/watch_count): ")
-value = input("Value: ")
+   name = input("Repo name: ")
+   field = input("Field (repo_name/watch_count): ")
+   value = input("Value: ")
 
 # convert watch_count to int if needed
 if field == "watch_count":
-value = int(value)
+  value = int(value)
 
-mongodb_crud.update_repo(collection, name, {field: value})
+   mongodb_crud.update_repo(collection, name, {field: value})
 
 # -------------------------------------------------
 # DELETE REPO
 # -------------------------------------------------
 elif choice == "4":
 
-name = input("Repo name: ")
-mongodb_crud.delete_repo(collection, name)
+  name = input("Repo name: ")
+  mongodb_crud.delete_repo(collection, name)
 
 # -------------------------------------------------
 # LIST ALL REPOS
 # -------------------------------------------------
 elif choice == "5":
 
-print(mongodb_crud.list_all_repos(collection))
+  print(mongodb_crud.list_all_repos(collection))
 
 # -------------------------------------------------
 # FEATURE 1: NAME LENGTH ANALYSIS
 # -------------------------------------------------
 elif choice == "6":
 
-mongodb_features.display_repo_name_lengths(collection)
+  mongodb_features.display_repo_name_lengths(collection)
 
 # -------------------------------------------------
 # FEATURE 2: TOP WATCHED REPOS
 # -------------------------------------------------
 elif choice == "7":
 
-mongodb_features.display_top_repositories(collection)
+  mongodb_features.display_top_repositories(collection)
 
 # -------------------------------------------------
 # FEATURE 3: WATCH STATISTICS
 # -------------------------------------------------
 elif choice == "8":
 
-mongodb_features.display_watch_statistics(collection)
+  mongodb_features.display_watch_statistics(collection)
 
 # -------------------------------------------------
 # EXIT
 # -------------------------------------------------
 elif choice == "0":
-break
+ break
 
 else:
-print("[WARN] Invalid choice. Try again.")
+  print("[WARN] Invalid choice. Try again.")
 
 # ─────────────────────────────────────────
 #  ENTRY POINT
