@@ -300,7 +300,7 @@ def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
    collection = mongodb_crud.connect_to_mongodb()
 if collection is None:
    print("Cannot connect to MongoDB.")
-return
+   return
 
 while True:
 
