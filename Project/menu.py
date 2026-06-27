@@ -295,7 +295,6 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 # =====================================================
 # MONGODB MENU 
 # =====================================================
-
 def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
    collection = mongodb_crud.connect_to_mongodb()
@@ -335,7 +334,6 @@ else:
 # READ ONE REPO
 # -------------------------------------------------
 elif choice == "2":
-
    name = input("Repo name: ")
    print(mongodb_crud.read_repo(collection, name))
 
@@ -350,7 +348,7 @@ elif choice == "3":
 
 # convert watch_count to int if needed
 if field == "watch_count":
-  value = int(value)
+   value = int(value)
 
    mongodb_crud.update_repo(collection, name, {field: value})
 
