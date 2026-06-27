@@ -399,15 +399,6 @@ def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
         else:
             print("[WARN] Invalid choice. Try again.")
 
-# -------------------------------------------------
-# EXIT
-# -------------------------------------------------
-elif choice == "0":
- break
-
-else:
-  print("[WARN] Invalid choice. Try again.")
-
 # ─────────────────────────────────────────
 #  ENTRY POINT
 # ─────────────────────────────────────────
