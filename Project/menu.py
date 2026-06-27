@@ -322,13 +322,13 @@ choice = input("Choice: ")
 # -------------------------------------------------
 if choice == "1":
 
-   data = mongodb_crud.load_github_data(data_filepath)
+    data = mongodb_crud.load_github_data(data_filepath)
 
-if data:
-    mongodb_crud.bulk_create_repos(collection, data)
-    print("[OK] MongoDB loaded from sample_repos.json")
-else:
-    print("[ERROR] No data loaded.")
+    if data:
+      mongodb_crud.bulk_create_repos(collection, data)
+      print("[OK] MongoDB loaded from sample_repos.json")
+    else:
+        print("[ERROR] No data loaded.")
 
 # -------------------------------------------------
 # READ ONE REPO
