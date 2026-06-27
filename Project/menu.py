@@ -398,7 +398,32 @@ def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
         else:
             print("[WARN] Invalid choice. Try again.")
+def run_app():
+    """
+    Run the top-level database selection menu.
+    Routes to the appropriate database submenu based on user choice.
+    Placeholder databases print a coming-soon message and return here.
+    """
+    while True:
+        print_main_menu()
+        choice = input("  Enter choice: ").strip()
 
+        if choice == "1":
+            # Redis — fully implemented
+            run_redis_menu()
+
+        elif choice in ("2", "3", "4", "5"):
+            # Placeholder databases — not yet implemented
+            db_names = {"2": "MongoDB", "3": "Cassandra", "4": "Neo4j", "5": "SQLite"}
+            print(f"\n  [Option under construction] {db_names[choice]} coming soon.")
+            print("  Returning to main menu...")
+
+        elif choice == "0":
+            print("\n  Goodbye!\n")
+            break
+
+        else:
+            print("  [WARN] Invalid choice. Please try again.")
 # ─────────────────────────────────────────
 #  ENTRY POINT
 # ─────────────────────────────────────────
