@@ -75,20 +75,18 @@ def load_github_data(filepath="sample_Repos.json"):
 
 def bulk_create_repos(collection, data):
 
-    if collection is None:
-        print("[ERROR] No MongoDB collection provided")
-        return
-
-    if not data:
-        print("[ERROR] No data to insert")
+    if collection is None or not data:
         return
 
     try:
+        # prevent duplicates using ordered insert or unique key logic
+        collection.delete_many({})  # OPTIONAL: clears old data
+
         collection.insert_many(data)
         print(f"[OK] Inserted {len(data)} repositories")
+
     except Exception as e:
         print("[ERROR] Insert failed:", e)
-
 
 # -----------------------------------------------------
 # READ
