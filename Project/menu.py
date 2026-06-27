@@ -298,11 +298,11 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
    collection = mongodb_crud.connect_to_mongodb()
-   if collection is None:
-       print("Cannot connect to MongoDB.")
-       return
+if collection is None:
+   print("Cannot connect to MongoDB.")
+   return
 
-   while True:
+while True:
 
   print("\n--- MONGODB MENU ---")
   print("1 Load")
@@ -314,6 +314,7 @@ def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
   print("7 Top Watch Count")
   print("8 Watch Statistics")
   print("0 Back")
+
 
 choice = input("Choice: ")
 
