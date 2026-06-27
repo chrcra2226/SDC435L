@@ -296,11 +296,6 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 # MONGODB MENU 
 # =====================================================
 
-
-Elvis Ngawe <elvis5ngawe@gmail.com>
-10:27 AM (0 minutes ago)
-to me
-
 def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
 collection = mongodb_crud.connect_to_mongodb()
