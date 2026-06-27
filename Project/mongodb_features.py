@@ -12,7 +12,7 @@ Schema: repo_name, watch_count
 
 def display_repo_name_lengths(collection):
 
-    if not collection:
+    if collection is None:
         return
 
     repos = list(collection.find({}, {"repo_name": 1, "_id": 0}))
@@ -36,7 +36,7 @@ def display_repo_name_lengths(collection):
 
 def display_top_repositories(collection):
 
-    if not collection:
+    if collection is None:
         return
 
     pipeline = [
@@ -64,7 +64,7 @@ def display_top_repositories(collection):
 
 def display_watch_statistics(collection):
 
-    if not collection:
+    if collection is None:
         return
 
     repos = list(collection.find({}, {"watch_count": 1, "_id": 0}))
@@ -92,7 +92,7 @@ def display_watch_statistics(collection):
 
 def get_total_repositories(collection):
 
-    if not collection:
+    if collection is None:
         return 0
 
     return collection.count_documents({})
