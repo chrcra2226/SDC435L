@@ -296,9 +296,12 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 # MONGODB MENU 
 # =====================================================
 
-def run_mongodb_menu(data_filepath="Project/data/sample_repos.json"):
+def run_mongodb_menu(data_filepath="data/sample_repos.json"):
 
     collection = mongodb_crud.connect_to_mongodb()
+    if collection is None:
+      print("Cannot connect to MongoDB.")
+      return
 
     while True:
 
