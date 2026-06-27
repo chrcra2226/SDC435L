@@ -411,10 +411,12 @@ def run_app():
         if choice == "1":
             # Redis — fully implemented
             run_redis_menu()
-
-        elif choice in ("2", "3", "4", "5"):
+          elif choice == "2":
+            #Mongodb - fully implemented
+            run_mongodb_menu()
+        elif choice in ( "3", "4", "5"):
             # Placeholder databases — not yet implemented
-            db_names = {"2": "MongoDB", "3": "Cassandra", "4": "Neo4j", "5": "SQLite"}
+            db_names = { "3": "Cassandra", "4": "Neo4j", "5": "SQLite"}
             print(f"\n  [Option under construction] {db_names[choice]} coming soon.")
             print("  Returning to main menu...")
 
