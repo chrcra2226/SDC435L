@@ -411,7 +411,7 @@ def run_app():
         if choice == "1":
             # Redis — fully implemented
             run_redis_menu()
-          elif choice == "2":
+        elif choice == "2":
             #Mongodb - fully implemented
             run_mongodb_menu()
         elif choice in ( "3", "4", "5"):
