@@ -39,7 +39,7 @@ def connect_to_mongodb(
 # LOAD DATA (sample_repos.json)
 # -----------------------------------------------------
 
-def load_github_data(filepath="sample_repos.json"):
+def load_github_data(filepath="sample_Repos.json"):
 
     try:
         with open(filepath, "r", encoding="utf-8") as f:
