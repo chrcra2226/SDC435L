@@ -296,27 +296,32 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 # MONGODB MENU 
 # =====================================================
 
+
+Elvis Ngawe <elvis5ngawe@gmail.com>
+10:27 AM (0 minutes ago)
+to me
+
 def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
-    collection = mongodb_crud.connect_to_mongodb()
-    if collection is None:
-      print("Cannot connect to MongoDB.")
-      return
+collection = mongodb_crud.connect_to_mongodb()
+if collection is None:
+print("Cannot connect to MongoDB.")
+return
 
-    while True:
+while True:
 
-        print("\n--- MONGODB MENU ---")
-        print("1 Load")
-        print("2 Read")
-        print("3 Update")
-        print("4 Delete")
-        print("5 List Repos")
-        print("6 Repo Name Length Analysis")
-        print("7 Top Watch Count")
-        print("8 Watch Statistics")
-        print("0 Back")
+print("\n--- MONGODB MENU ---")
+print("1 Load")
+print("2 Read")
+print("3 Update")
+print("4 Delete")
+print("5 List Repos")
+print("6 Repo Name Length Analysis")
+print("7 Top Watch Count")
+print("8 Watch Statistics")
+print("0 Back")
 
-      choice = input("Choice: ")
+choice = input("Choice: ")
 
 # -------------------------------------------------
 # LOAD JSON → MONGODB
@@ -340,7 +345,7 @@ name = input("Repo name: ")
 print(mongodb_crud.read_repo(collection, name))
 
 # -------------------------------------------------
-# UPDATE REPO (watch_count or other field)
+# UPDATE REPO
 # -------------------------------------------------
 elif choice == "3":
 
@@ -348,91 +353,56 @@ name = input("Repo name: ")
 field = input("Field (repo_name/watch_count): ")
 value = input("Value: ")
 
-            # convert watch_count to int if needed
-            if field == "watch_count":
-                value = int(value)
+# convert watch_count to int if needed
+if field == "watch_count":
+value = int(value)
 
-            mongodb_crud.update_repo(collection, name, {field: value})
+mongodb_crud.update_repo(collection, name, {field: value})
 
-        # -------------------------------------------------
-        # DELETE REPO
-        # -------------------------------------------------
-        elif choice == "4":
+# -------------------------------------------------
+# DELETE REPO
+# -------------------------------------------------
+elif choice == "4":
 
-            name = input("Repo name: ")
-            mongodb_crud.delete_repo(collection, name)
+name = input("Repo name: ")
+mongodb_crud.delete_repo(collection, name)
 
-        # -------------------------------------------------
-        # LIST ALL REPOS
-        # -------------------------------------------------
-        elif choice == "5":
+# -------------------------------------------------
+# LIST ALL REPOS
+# -------------------------------------------------
+elif choice == "5":
 
-            print(mongodb_crud.list_all_repos(collection))
+print(mongodb_crud.list_all_repos(collection))
 
-        # -------------------------------------------------
-        # FEATURE 1: NAME LENGTH ANALYSIS
-        # -------------------------------------------------
-        elif choice == "6":
+# -------------------------------------------------
+# FEATURE 1: NAME LENGTH ANALYSIS
+# -------------------------------------------------
+elif choice == "6":
 
-            mongodb_features.display_repo_name_lengths(collection)
+mongodb_features.display_repo_name_lengths(collection)
 
-        # -------------------------------------------------
-        # FEATURE 2: TOP WATCHED REPOS
-        # -------------------------------------------------
-        elif choice == "7":
+# -------------------------------------------------
+# FEATURE 2: TOP WATCHED REPOS
+# -------------------------------------------------
+elif choice == "7":
 
-            mongodb_features.display_top_repositories(collection)
+mongodb_features.display_top_repositories(collection)
 
-        # -------------------------------------------------
-        # FEATURE 3: WATCH STATISTICS
-        # -------------------------------------------------
-        elif choice == "8":
+# -------------------------------------------------
+# FEATURE 3: WATCH STATISTICS
+# -------------------------------------------------
+elif choice == "8":
 
-            mongodb_features.display_watch_statistics(collection)
+mongodb_features.display_watch_statistics(collection)
 
-        # -------------------------------------------------
-        # EXIT
-        # -------------------------------------------------
-        elif choice == "0":
-            break
-# ─────────────────────────────────────────
-#  MAIN LOOP
-# ─────────────────────────────────────────
+# -------------------------------------------------
+# EXIT
+# -------------------------------------------------
+elif choice == "0":
+break
 
-def run_app():
-    """
-    Run the top-level database selection menu.
-    Routes to the appropriate database submenu based on user choice.
-    """
-    while True:
-        print_main_menu()
-        choice = input("  Enter choice: ").strip()
-
-        if choice == "1":
-            # Redis — fully implemented
-            run_redis_menu()
-
-        elif choice == "2":
-            # MongoDB — fully implemented
-            run_mongodb_menu()
-
-        elif choice in ("3", "4", "5"):
-            # Placeholder databases — not yet implemented
-            db_names = {
-                "3": "Cassandra",
-                "4": "Neo4j",
-                "5": "SQLite"
-            }
-            print(f"\n  [Option under construction] {db_names[choice]} coming soon.")
-            print("  Returning to main menu...")
-
-        elif choice == "0":
-            print("\n  Goodbye!\n")
-            break
-
-        else:
-            print("  [WARN] Invalid choice. Please try again.")
-
+else:
+print("[WARN] Invalid choice. Try again.")
 
 # ─────────────────────────────────────────
 #  ENTRY POINT
