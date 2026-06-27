@@ -297,97 +297,107 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 # =====================================================
 def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
-   collection = mongodb_crud.connect_to_mongodb()
-if collection is None:
-   print("Cannot connect to MongoDB.")
-   return
+    collection = mongodb_crud.connect_to_mongodb()
 
-while True:
+    if collection is None:
+        print("Cannot connect to MongoDB.")
+        return
 
-  print("\n--- MONGODB MENU ---")
-  print("1 Load")
-  print("2 Read")
-  print("3 Update")
-  print("4 Delete")
-  print("5 List Repos")
-  print("6 Repo Name Length Analysis")
-  print("7 Top Watch Count")
-  print("8 Watch Statistics")
-  print("0 Back")
+    while True:
 
+        print("\n--- MONGODB MENU ---")
+        print("1 Load")
+        print("2 Read")
+        print("3 Update")
+        print("4 Delete")
+        print("5 List Repos")
+        print("6 Repo Name Length Analysis")
+        print("7 Top Watch Count")
+        print("8 Watch Statistics")
+        print("0 Back")
 
-choice = input("Choice: ")
+        choice = input("Choice: ")
 
-# -------------------------------------------------
-# LOAD JSON → MONGODB
-# -------------------------------------------------
-if choice == "1":
+        # -------------------------------------------------
+        # LOAD JSON → MONGODB
+        # -------------------------------------------------
+        if choice == "1":
 
-    data = mongodb_crud.load_github_data(data_filepath)
+            data = mongodb_crud.load_github_data(data_filepath)
 
-    if data:
-      mongodb_crud.bulk_create_repos(collection, data)
-      print("[OK] MongoDB loaded from sample_repos.json")
-    else:
-        print("[ERROR] No data loaded.")
+            if data:
+                mongodb_crud.bulk_create_repos(collection, data)
+                print("[OK] MongoDB loaded from sample_Repos.json")
+            else:
+                print("[ERROR] No data loaded.")
 
-# -------------------------------------------------
-# READ ONE REPO
-# -------------------------------------------------
-elif choice == "2":
-   name = input("Repo name: ")
-   print(mongodb_crud.read_repo(collection, name))
+        # -------------------------------------------------
+        # READ ONE REPO
+        # -------------------------------------------------
+        elif choice == "2":
 
-# -------------------------------------------------
-# UPDATE REPO
-# -------------------------------------------------
-elif choice == "3":
+            name = input("Repo name: ")
+            print(mongodb_crud.read_repo(collection, name))
 
-   name = input("Repo name: ")
-   field = input("Field (repo_name/watch_count): ")
-   value = input("Value: ")
+        # -------------------------------------------------
+        # UPDATE REPO
+        # -------------------------------------------------
+        elif choice == "3":
 
-# convert watch_count to int if needed
-if field == "watch_count":
-   value = int(value)
+            name = input("Repo name: ")
+            field = input("Field (repo_name/watch_count): ")
+            value = input("Value: ")
 
-   mongodb_crud.update_repo(collection, name, {field: value})
+            # convert watch_count to int if needed
+            if field == "watch_count":
+                value = int(value)
 
-# -------------------------------------------------
-# DELETE REPO
-# -------------------------------------------------
-elif choice == "4":
+            mongodb_crud.update_repo(collection, name, {field: value})
 
-  name = input("Repo name: ")
-  mongodb_crud.delete_repo(collection, name)
+        # -------------------------------------------------
+        # DELETE REPO
+        # -------------------------------------------------
+        elif choice == "4":
 
-# -------------------------------------------------
-# LIST ALL REPOS
-# -------------------------------------------------
-elif choice == "5":
+            name = input("Repo name: ")
+            mongodb_crud.delete_repo(collection, name)
 
-  print(mongodb_crud.list_all_repos(collection))
+        # -------------------------------------------------
+        # LIST ALL REPOS
+        # -------------------------------------------------
+        elif choice == "5":
 
-# -------------------------------------------------
-# FEATURE 1: NAME LENGTH ANALYSIS
-# -------------------------------------------------
-elif choice == "6":
+            print(mongodb_crud.list_all_repos(collection))
 
-  mongodb_features.display_repo_name_lengths(collection)
+        # -------------------------------------------------
+        # FEATURE 1: NAME LENGTH ANALYSIS
+        # -------------------------------------------------
+        elif choice == "6":
 
-# -------------------------------------------------
-# FEATURE 2: TOP WATCHED REPOS
-# -------------------------------------------------
-elif choice == "7":
+            mongodb_features.display_repo_name_lengths(collection)
 
-  mongodb_features.display_top_repositories(collection)
+        # -------------------------------------------------
+        # FEATURE 2: TOP WATCHED REPOS
+        # -------------------------------------------------
+        elif choice == "7":
 
-# -------------------------------------------------
-# FEATURE 3: WATCH STATISTICS
-# -------------------------------------------------
-elif choice == "8":
+            mongodb_features.display_top_repositories(collection)
 
-  mongodb_features.display_watch_statistics(collection)
+        # -------------------------------------------------
+        # FEATURE 3: WATCH STATISTICS
+        # -------------------------------------------------
+        elif choice == "8":
+
+            mongodb_features.display_watch_statistics(collection)
+
+        # -------------------------------------------------
+        # EXIT
+        # -------------------------------------------------
+        elif choice == "0":
+            break
+
+        else:
+            print("[WARN] Invalid choice. Try again.")
 
 # -------------------------------------------------
 # EXIT
