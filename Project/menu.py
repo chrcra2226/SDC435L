@@ -321,14 +321,13 @@ def run_mongodb_menu(data_filepath="data/sample_repos.json"):
         # -------------------------------------------------
         # LOAD JSON → MONGODB
         # -------------------------------------------------
-        if choice == "1":
+        data = mongodb_crud.load_github_data(data_filepath)
 
-            data = mongodb_crud.load_github_data(data_filepath)
-
-            mongodb_crud.bulk_create_repos(collection, data)
-
-            print("[OK] MongoDB loaded from sample_repos.json")
-
+        if data:
+           mongodb_crud.bulk_create_repos(collection, data)
+           print("[OK] MongoDB loaded from sample_repos.json")
+        else:
+          print("[ERROR] No data loaded.")
         # -------------------------------------------------
         # READ ONE REPO
         # -------------------------------------------------
