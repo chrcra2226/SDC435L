@@ -46,7 +46,7 @@ def connect_to_redis(host="localhost", port=6379, db=0):
         redis.Redis: An active Redis client instance.
     """
     try:
-        client = redis.Redis(host=host, port=port, db=db, decode_responses=True)
+        client = redis.Redis(host=host, port=port, db=db, decode_responses=True , protocol=2)
         client.ping()  # Verify the connection is alive
         print(f"[OK] Connected to Redis at {host}:{port}")
         return client
