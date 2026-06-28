@@ -41,7 +41,7 @@ def connect_to_mongodb(
 
 import json
 
-def load_github_data(filepath="sample_Repos.json"):
+def load_github_data(filepath="Sample_Repos.json"):
 
     data = []
 
