@@ -201,7 +201,7 @@ def print_redis_menu():
     print("=" * 50)
 
 
-def run_redis_menu(data_filepath="Project/data/Commits.json"):
+def run_redis_menu(data_filepath="data/Commits.json"):
     """
     Connect to Redis and run the Redis submenu loop.
     Returns to the main menu when the user enters 0.
@@ -295,7 +295,7 @@ def run_redis_menu(data_filepath="Project/data/Commits.json"):
 # =====================================================
 # MONGODB MENU 
 # =====================================================
-def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
+def run_mongodb_menu(data_filepath="data/Sample_Repos.json"):
 
     collection = mongodb_crud.connect_to_mongodb()
 
@@ -327,7 +327,7 @@ def run_mongodb_menu(data_filepath="data/sample_Repos.json"):
 
             if data:
                 mongodb_crud.bulk_create_repos(collection, data)
-                print("[OK] MongoDB loaded from sample_Repos.json")
+                print("[OK] MongoDB loaded from Sample_Repos.json")
             else:
                 print("[ERROR] No data loaded.")
 
