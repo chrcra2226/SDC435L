@@ -1,9 +1,7 @@
 # SDC435L
-Lab files
+Lab files for the class group project.
 ## Project Overview
 
-
-Project Overview
 
 This Python application integrates with multiple database technologies to store and analyze data from the GitHub Archive dataset (GitHubArchive-Dataset.zip). Each part of the project introduces a new database, building toward a comprehensive understanding of how different data storage systems handle the same real-world data.
 
@@ -18,7 +16,7 @@ This is a five-part group project. Part 1 (Redis) and Part 2 (mongodb) are fully
 | 5    | SQLite    | Relational            | Under Construction|
 
 
-Dataset
+### Dataset
 
 This application uses Commits.json from the provided GitHubArchive-Dataset.zip. Each line of the file is one JSON object describing a single Git commit, with fields including:
 
@@ -34,20 +32,29 @@ This application uses Commits.json from the provided GitHubArchive-Dataset.zip. 
 | `tree`       | The tree SHA                                                |
 The dataset ZIP also includes several other files (Files.json, Contents.json, Languages.json, Licenses.json, and Sample_* variants) describing repository file listings, file contents, language breakdowns, and license info. These are not used by the current Redis implementation but are used in later phases such as MongoDB.
 
-Project Structure
+### Project Structure
 
 project/
-├── menu.py               # Entry point — main menu and all submenus
-├── redis_crud.py         # Redis: connection, data loading, CRUD operations
-├── redis_features.py     # Redis: three analytical features
-├── mongodb_crud.py       # MongoDB: CRUD operations 
-├── mongodb_features.py   # MongoDB: three analytical features 
-├── README.md             # This file
-└── data/
-    ├── Commits.json       # Redis dataset (GitHub commits)
-    └── Sample_repos.json  # MongoDB dataset (repositories)
 
-File Responsibilities
+├── menu.py               # Entry point — main menu and all submenus
+
+├── redis_crud.py         # Redis: connection, data loading, CRUD operations
+
+├── redis_features.py     # Redis: three analytical features
+
+├── mongodb_crud.py       # MongoDB: CRUD operations 
+
+├── mongodb_features.py   # MongoDB: three analytical features 
+
+├── README.md             # This file
+
+└── data/
+
+---├── Commits.json       # Redis dataset (GitHub commits)
+    
+---└── Sample_repos.json  # MongoDB dataset (repositories)
+
+### File Responsibilities
 
 menu.py — The only file you run. Displays the main database selection menu, routes to each database's submenu, and handles all user input and result display. As new databases are added in future weeks, new submenus are added here.
 
@@ -59,67 +66,106 @@ mongodb_crud.py — Handles MongoDB connection, dataset loading, and CRUD operat
 
 mongodb_features.py — Implements analytical queries using MongoDB aggregation pipelines.
 
-Navigation Pathways
+### Navigation Pathways
 
-Main Menu
+#### Main Menu
 
 python menu.py
+
 │
+
 ├── 1. Redis      → Redis Submenu (fully implemented)
+
 ├── 2. MongoDB    → MongoDB Submenu (fully implemented)
+
 ├── 3. Cassandra  → "Option under construction"
+
 ├── 4. Neo4j      → "Option under construction"
+
 ├── 5. SQLite     → "Option under construction"
+
 └── 0. Exit
 
-Redis Submenu
+#### Redis Submenu
 
 Redis Menu
+
 │
+
 ├── CRUD Operations
+
 │     1. Load & store all commits from file
+
 │     2. Read a specific commit by SHA
+
 │     3. Update a commit field
+
 │     4. Delete a commit by SHA
+
 │     5. List stored commit SHAs
+
 │
+
 ├── Features
+
 │     6. Most active repositories
+
 │     7. Commit keyword frequency analysis
+
 │     8. Author contribution history
+
 │     9. Top contributors leaderboard
+
 │
+
 └── 0. Back to main menu
 
-MongoDB Submenu
+#### MongoDB Submenu
 
 MongoDB Menu
+
 │
+
 ├── CRUD Operations
+
 │     1. Load & store all repository documents from file
+
 │     2. Read repository by name
+
 │     3. Update repository fields
+
 │     4. Delete repository by name
+
 │
+
 ├── Features
+
 │     5. Top watched repositories
+
 │     6. Language distribution analysis
+
 │     7. Repository activity summary (commits vs watch count)
+
 │
+
 └── 0. Back to main menu
 
 
-Part 1 — Redis Features
+## Part 1 — Redis Features
 
-CRUD Operations
+### CRUD Operations
 
 Create — Load commit records from Commits.json into Redis using pipelining for efficiency
+
 Read — Retrieve commits by SHA
+
 Update — Modify stored commit fields
+
 Delete — Remove commits by SHA
+
 List — Scan stored commit SHAs
 
-Analytical Features
+### Analytical Features
 
 Feature 1 — Most Active Repositories
 Counts commits per repository and stores results in a Redis Sorted Set. Displays a ranked leaderboard.
@@ -130,7 +176,7 @@ Analyzes the first word of commit subject lines (e.g. Fix, Add, Update) and stor
 Feature 3 — Author Contribution History
 Tracks author commit activity using Redis lists and sorted sets to show top contributors and history.
 
-## Redis Data Model
+### Redis Data Model
 
 | Key Pattern              | Redis Type     | Description                                       |
 |---------------------------|----------------|----------------------------------------------------|
@@ -142,7 +188,7 @@ Tracks author commit activity using Redis lists and sorted sets to show top cont
 
 ---
 
-## Technology Requirements
+### Redis Technology Requirements
 
 | Requirement    | Details        |
 |----------------|----------------|
@@ -151,16 +197,19 @@ Tracks author commit activity using Redis lists and sorted sets to show top cont
 | Python Driver  | `redis-py`     |
 
 
-Part 2 — MongoDB Features
+## Part 2 — MongoDB Features
 
-CRUD Operations
+### CRUD Operations
 
 Create — Insert repository documents into MongoDB collection
+
 Read — Query repositories by name, language, or metrics
+
 Update — Modify repository attributes (watch_count, commits, language)
+
 Delete — Remove repository documents by name
 
-Analytical Features
+### Analytical Features
 
 Feature 1 — Top Watched Repositories
 Uses MongoDB aggregation pipeline to rank repositories by watch_count
@@ -171,33 +220,39 @@ Groups repositories by programming language and counts occurrences
 Feature 3 — Repository Activity Summary
 Compares commits vs watch_count to evaluate repository engagement
 
+### MongoDB Data Model
 
-
-MongoDB Data Model
-
-Collection: repositories
+Collection: `repositories`
 
 Each document includes:
-- repo_name
-- watch_count
-- language
-- commits
 
-MongoDB Technology Stack
+| Field        | Type   | Description                              |
+|--------------|--------|------------------------------------------|
+| `repo_name`  | String | Full repository name (e.g. owner/repo)   |
+| `watch_count`| String | Number of users watching the repository  |
+| `language`   | String | Primary programming language of the repo |
+| `commits`    | String | Total number of commits in the repository|
 
-- MongoDB 6.0+
-- PyMongo driver
-- Document-based NoSQL storage
-- Aggregation pipelines for analytics
+---
 
-Dependencies
+### MongoDB Technology Stack
 
-Install required packages:
+| Component      | Details                              |
+|----------------|--------------------------------------|
+| Database       | MongoDB 6.0+                         |
+| Python Driver  | `pymongo`                            |
+| Storage Model  | Document-based NoSQL storage         |
+| Analytics      | Aggregation pipelines for analytics  |
+
+## Dependencies
+
+### Install required packages:
 
 pip install redis
+
 pip install pymongo
 
-Setup & Running the Application
+## Setup & Running the Application
 
 1. Start MongoDB and Redis servers
 
@@ -211,17 +266,21 @@ mongod
 
 python menu.py
 
-Recommended Workflow
+## Recommended Workflow
 
 Redis:
+
 - Select option 1
-- Load Commits.json
-- Run analytics (options 6–9)
+- Select option 1 on Redis Menu
+- Loads Commits.json
+- Run CRUD and analytic features (options 2–9)
 
 MongoDB:
+
 - Select option 2
-- Load Sample_repos.json
-- Run CRUD and analytics features
+- Select option 1 on MongoDB Menu
+- Loads Sample_repos.json
+- Run CRUD and analytics features (options 2-8)
 
 Team Members
 
