@@ -415,8 +415,8 @@ def run_app():
             #Mongodb - fully implemented
             run_mongodb_menu()
         elif choice == "3":
-            # Redis — fully implemented
-            run_redis_menu()
+            # cassandra — fully implemented
+            run_cassandra_menu()
         elif choice in ( "4", "5"):
             # Placeholder databases — not yet implemented
             db_names = { "4": "Neo4j", "5": "SQLite"}
