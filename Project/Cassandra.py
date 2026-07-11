@@ -133,6 +133,7 @@ def license_distribution():
         print(f"{license_name:<20} {count}")
 
 #FUNCTION 1
+#=======================================
 def search_by_license():
 
     target_license = input(
@@ -157,7 +158,8 @@ def search_by_license():
 
     print(f"\nTotal Found: {total}")
 
-
+#FUNCTION 2
+#================================================
 def visualize_licenses():
 
     rows = session.execute("""
@@ -186,7 +188,8 @@ def visualize_licenses():
 
     plt.show()
 
-
+#fUNTION 3
+#===================================================
 def record_count():
 
     rows = session.execute("""
