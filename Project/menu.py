@@ -30,7 +30,7 @@ import redis_crud
 import redis_features
 import mongodb_crud
 import mongodb_features
-
+from cassandra.cluster import Cluster
 
 
 # ─────────────────────────────────────────
@@ -414,9 +414,12 @@ def run_app():
         elif choice == "2":
             #Mongodb - fully implemented
             run_mongodb_menu()
-        elif choice in ( "3", "4", "5"):
+          if choice == "3":
+            # Redis — fully implemented
+            run_redis_menu()
+        elif choice in ( "4", "5"):
             # Placeholder databases — not yet implemented
-            db_names = { "3": "Cassandra", "4": "Neo4j", "5": "SQLite"}
+            db_names = { "4": "Neo4j", "5": "SQLite"}
             print(f"\n  [Option under construction] {db_names[choice]} coming soon.")
             print("  Returning to main menu...")
 
@@ -427,267 +430,335 @@ def run_app():
         else:
             print("  [WARN] Invalid choice. Please try again.")
           
-# =====================================================
-# DATABASE SETUP
-# =====================================================
-
-session.execute("""
-CREATE KEYSPACE IF NOT EXISTS github_license_db
-WITH replication = {
-    'class':'SimpleStrategy',
-    'replication_factor':1
-}
-""")
-
-session.set_keyspace("github_license_db")
-
-session.execute("""
-CREATE TABLE IF NOT EXISTS repositories (
-    repo_name TEXT PRIMARY KEY,
-    license TEXT
-)
-""")
-
-print("Database setup complete.")
-#-----------------------------
-# CRUD FUNCTIONS
-#-----------------------------
-def create_repository():
-
-    print("\n--- Create Repository ---")
-
-    repo_name = input("Repository Name: ")
-    license_name = input("License: ")
+#=================================================================
+# DATABASE CONNECTIONS
+def connect_cassandra():
+    cluster = Cluster(['127.0.0.1'])
+    session = cluster.connect()
 
     session.execute("""
-    INSERT INTO repositories (repo_name, license)
-    VALUES (%s, %s)
-    """, (repo_name, license_name))
-
-    print("Repository created successfully.")
-
-
-def read_repository():
-
-    print("\n--- Read Repository ---")
-
-    repo_name = input("Repository Name: ")
-
-    rows = session.execute("""
-    SELECT *
-    FROM repositories
-    WHERE repo_name=%s
-    """, [repo_name])
-
-    found = False
-
-    for row in rows:
-        found = True
-
-        print("\nRepository Found")
-        print(f"Repository : {row.repo_name}")
-        print(f"License    : {row.license}")
-
-    if not found:
-        print("Repository not found.")
-
-
-def update_repository():
-
-    print("\n--- Update Repository ---")
-
-    repo_name = input("Repository Name: ")
-    new_license = input("New License: ")
-
-    session.execute("""
-    UPDATE repositories
-    SET license=%s
-    WHERE repo_name=%s
-    """, (new_license, repo_name))
-
-    print("Repository updated successfully.")
-
-
-def delete_repository():
-
-    print("\n--- Delete Repository ---")
-
-    repo_name = input("Repository Name: ")
-
-    session.execute("""
-    DELETE FROM repositories
-    WHERE repo_name=%s
-    """, [repo_name])
-
-    print("Repository deleted successfully.")
-
-
-# =====================================================
-# ANALYTICS FUNCTIONS
-# =====================================================
-
-def license_distribution():
-
-    rows = session.execute("""
-    SELECT license
-    FROM repositories
+    CREATE KEYSPACE IF NOT EXISTS github_license_db
+    WITH replication = {
+        'class':'SimpleStrategy',
+        'replication_factor':1
+    }
     """)
 
-    licenses = [row.license for row in rows]
+    session.set_keyspace("github_license_db")
 
-    counts = Counter(licenses)
+    session.execute("""
+    CREATE TABLE IF NOT EXISTS repositories(
+        repo_name TEXT PRIMARY KEY,
+        license TEXT
+    )
+    """)
 
-    print("\nTop License Distribution\n")
+    return session
 
-    for license_name, count in counts.most_common(10):
-        print(f"{license_name:<20} {count}")
-#========================
-#FUNCTION 1
-#========================
-def search_by_license():
 
-    target_license = input(
-        "\nEnter License Name: "
+def connect_mongodb():
+
+    client = MongoClient(
+        "mongodb://localhost:27017/"
+    )
+
+    db = client["github_license_db"]
+
+    return db
+
+
+def connect_redis():
+
+    return redis.Redis(
+        host="localhost",
+        port=6379,
+        decode_responses=True
+    )
+#============================================
+# LOAD JSON INTO ALL DATABASES
+def load_json_all(
+        cassandra_session,
+        mongodb,
+        redis_db,
+        filename
+):
+
+    with open(filename, "r") as file:
+
+        for line in file:
+
+            data = json.loads(line)
+
+            repo = data["repo_name"]
+            license_name = data["license"]
+
+            # Cassandra
+
+            cassandra_session.execute("""
+            INSERT INTO repositories(
+                repo_name,
+                license
+            )
+            VALUES (%s,%s)
+            """,
+            (
+                repo,
+                license_name
+            ))
+
+            # MongoDB
+
+            mongodb.repositories.insert_one(
+                {
+                    "repo_name": repo,
+                    "license": license_name
+                }
+            )
+
+# Redis
+
+            redis_db.hset(
+                f"repo:{repo}",
+                mapping={
+                    "license": license_name
+                }
+            )
+
+    print(
+        "Data loaded into all databases."
+    )
+    
+# CASSANDRA CRUD
+def cassandra_create(session):
+
+    repo = input(
+        "Repository Name: "
+    )
+
+    license_name = input(
+        "License: "
+    )
+
+    session.execute("""
+    INSERT INTO repositories(
+        repo_name,
+        license
+    )
+    VALUES (%s,%s)
+    """,
+    (
+        repo,
+        license_name
+    ))
+
+    print("Created.")
+
+
+def cassandra_read(session):
+
+    repo = input(
+        "Repository Name: "
     )
 
     rows = session.execute("""
     SELECT *
     FROM repositories
-    """)
-
-    total = 0
-
-    print("\nRepositories\n")
+    WHERE repo_name=%s
+    """,
+    [repo])
 
     for row in rows:
 
-        if row.license == target_license:
+        print(
+            row.repo_name,
+            row.license
+        )
 
-            print(row.repo_name)
-            total += 1
+# MONGODB CRUD
+def mongo_create(db):
 
-    print(f"\nTotal Found: {total}")
+    repo = input(
+        "Repository Name: "
+    )
 
-#=====================================
-#Function 2
-#=====================================
-def visualize_licenses():
+    license_name = input(
+        "License: "
+    )
 
-    rows = session.execute("""
-    SELECT license
-    FROM repositories
-    """)
+    db.repositories.insert_one(
+        {
+            "repo_name": repo,
+            "license": license_name
+        }
+    )
 
-    licenses = [row.license for row in rows]
+    print("Created.")
 
-    counts = Counter(licenses)
 
-    top_ten = counts.most_common(10)
+def mongo_read(db):
 
-    labels = [item[0] for item in top_ten]
-    values = [item[1] for item in top_ten]
+    repo = input(
+        "Repository Name: "
+    )
 
-    plt.figure(figsize=(10, 6))
-    plt.bar(labels, values)
+    result = db.repositories.find_one(
+        {
+            "repo_name": repo
+        }
+    )
 
-    plt.title("Top 10 GitHub Licenses")
-    plt.xlabel("License Type")
-    plt.ylabel("Number of Repositories")
+    print(result)
 
-    plt.xticks(rotation=45)
-    plt.tight_layout()
+# REDIS CRUD
+def redis_create(r):
 
-    plt.show()
+    repo = input(
+        "Repository Name: "
+    )
 
-#=================================================
-#Funtion 3
-#=================================================
-def record_count():
+    license_name = input(
+        "License: "
+    )
 
-    rows = session.execute("""
-    SELECT repo_name
-    FROM repositories
-    """)
+    r.hset(
+        f"repo:{repo}",
+        mapping={
+            "license": license_name
+        }
+    )
 
-    count = len(list(rows))
+    print("Created.")
 
-    print(f"\nTotal Records: {count}")
 
-# =====================================================
-# MENU
-# =====================================================
+def redis_read(r):
 
-def menu():
+    repo = input(
+        "Repository Name: "
+    )
+
+    result = r.hgetall(
+        f"repo:{repo}"
+    )
+
+    print(result)
+#=======================================  
+#MENUS
+def cassandra_menu(session):
 
     while True:
 
-        print("\n" + "=" * 60)
-        print("      GitHub License Analytics System")
-        print("=" * 60)
+        print("\nCASSANDRA MENU")
+        print("1. Create")
+        print("2. Read")
+        print("3. Back")
 
-        print("\nCRUD OPERATIONS")
-        print("  1. Create Repository")
-        print("  2. Read Repository")
-        print("  3. Update Repository")
-        print("  4. Delete Repository")
-
-        print("\nANALYTICS")
-        print("  5. License Distribution")
-        print("  6. Search by License")
-        print("  7. Visualize Top Licenses")
-
-        print("\nSYSTEM")
-        print("  8. Show Record Count")
-        print("  9. Exit")
-
-        print("-" * 60)
-
-        choice = input("Select an option (1-9): ")
+        choice = input("Choice: ")
 
         if choice == "1":
-            create_repository()
+            cassandra_create(session)
 
         elif choice == "2":
-            read_repository()
+            cassandra_read(session)
 
         elif choice == "3":
-            update_repository()
-
-        elif choice == "4":
-            delete_repository()
-
-        elif choice == "5":
-            license_distribution()
-
-        elif choice == "6":
-            search_by_license()
-
-        elif choice == "7":
-            visualize_licenses()
-
-        elif choice == "8":
-            record_count()
-
-        elif choice == "9":
-
-            print("\nThank you for using")
-            print("GitHub License Analytics System")
-            print("Goodbye!")
-
             break
 
-        else:
+def mongodb_menu(db):
 
-            print("\nInvalid selection. Try again.")
+    while True:
 
+        print("\nMONGODB MENU")
+        print("1. Create")
+        print("2. Read")
+        print("3. Back")
 
-# =====================================================
+        choice = input("Choice: ")
+
+        if choice == "1":
+            mongo_create(db)
+
+        elif choice == "2":
+            mongo_read(db)
+
+        elif choice == "3":
+            break
+
+#====================
+#Redis menu
+def redis_menu(r):
+
+    while True:
+
+        print("\nREDIS MENU")
+        print("1. Create")
+        print("2. Read")
+        print("3. Back")
+
+        choice = input("Choice: ")
+
+        if choice == "1":
+            redis_create(r)
+
+        elif choice == "2":
+            redis_read(r)
+
+        elif choice == "3":
+            break
+
 # MAIN
-# =====================================================
+def main():
 
-if __name__ == "__main__":
+    cassandra_session = connect_cassandra()
 
-    menu()
+    mongodb = connect_mongodb()
+
+    redis_db = connect_redis()
+
+    load_json_all(
+        cassandra_session,
+        mongodb,
+        redis_db,
+        "Licenses.json"
+    )
+
+    while True:
+
+        print("\n")
+        print("=" * 50)
+        print("GitHub License Analytics System")
+        print("=" * 50)
+
+        print("1. Cassandra")
+        print("2. MongoDB")
+        print("3. Redis")
+        print("4. Exit")
+
+        choice = input(
+            "Choice: "
+        )
+
+        if choice == "1":
+
+            cassandra_menu(
+                cassandra_session
+            )
+
+        elif choice == "2":
+
+            mongodb_menu(
+                mongodb
+            )
+
+        elif choice == "3":
+
+            redis_menu(
+                redis_db
+            )
+
+        elif choice == "4":
+
+            print("Goodbye")
+            break
 
 # ─────────────────────────────────────────
 #  ENTRY POINT
