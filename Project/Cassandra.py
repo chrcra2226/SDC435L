@@ -1,191 +1,139 @@
-#Michael Winsted
-#July 11, 2026
-#SDC435L 3.3 project
+# Michael Winstead
+# July 11, 2026
+# SDC435L 3.3 Project
 
 import json
 from cassandra.cluster import Cluster
-#Create
-#Notify when script is starting
+
+
+# =====================================================
+# CONNECT TO CASSANDRA
+# =====================================================
+
 print("Connecting to local Cassandra database...")
 
-
-#Connect to a local Cassandra cluster
 cluster = Cluster()
 session = cluster.connect()
 
-#DATABASE SETUP
-query ="""Creates keyspace and repositories table."""
-    session.execute("""
+# =====================================================
+# DATABASE SETUP
+# =====================================================
+
+session.execute("""
 CREATE KEYSPACE IF NOT EXISTS github_license_db
-    WITH replication = {
-        'class':'SimpleStrategy',
-        'replication_factor':1
-    }
-    """)
+WITH replication = {
+    'class':'SimpleStrategy',
+    'replication_factor':1
+}
+""")
 
-    session.set_keyspace("github_license_db")
+session.set_keyspace("github_license_db")
 
-    session.execute("""
-    CREATE TABLE IF NOT EXISTS repositories (
+session.execute("""
+CREATE TABLE IF NOT EXISTS repositories (
+    repo_name TEXT PRIMARY KEY,
+    license TEXT
+)
+""")
 
-        repo_name TEXT PRIMARY KEY,
+print("Database setup complete.")
 
-        license TEXT
-    )
-    """)
+# =====================================================
+# CRUD FUNCTIONS
+# =====================================================
 
-    print("Database setup complete.")
-#CHECK IF TABLE CONTAINS DATA
-query ="""Returns True if table contains no data.
-    Used to prevent duplicate imports."""
+def create_repository():
 
-    rows = session.execute("""
-    SELECT repo_name
-    FROM repositories
-    LIMIT 1
-    """)
+    print("\n--- Create Repository ---")
 
-    return len(list(rows)) == 0
-#LOAD JSON DATASET
-#Import data from JSON file
-for line in open('Licenses.json', 'r'):
-    dataSet = json.loads(line)
-# CREATE
-#create table
-def create_repository(session):
-
-    print("\nCreate Repository")
-
-    repo_name = input(
-        "Repository Name: "
-    )
-
-    license_name = input(
-        "License: "
-    )
+    repo_name = input("Repository Name: ")
+    license_name = input("License: ")
 
     session.execute("""
-    INSERT INTO repositories(
-        repo_name,
-        license
-    )
-    VALUES (%s,%s)
-    """,
-    (
-        repo_name,
-        license_name
-    ))
+    INSERT INTO repositories (repo_name, license)
+    VALUES (%s, %s)
+    """, (repo_name, license_name))
 
     print("Repository created successfully.")
-# READ
-def read_repository(session):
 
-    print("\nRead Repository")
 
-    repo_name = input(
-        "Repository Name: "
-    )
+def read_repository():
+
+    print("\n--- Read Repository ---")
+
+    repo_name = input("Repository Name: ")
 
     rows = session.execute("""
     SELECT *
     FROM repositories
     WHERE repo_name=%s
-    """,
-    [repo_name])
+    """, [repo_name])
 
     found = False
 
     for row in rows:
-
         found = True
 
         print("\nRepository Found")
-
-        print(
-            f"Repository : {row.repo_name}"
-        )
-
-        print(
-            f"License    : {row.license}"
-        )
+        print(f"Repository : {row.repo_name}")
+        print(f"License    : {row.license}")
 
     if not found:
-
         print("Repository not found.")
-# UPDATE
 
-def update_repository(session):
 
-    print("\nUpdate Repository")
+def update_repository():
 
-    repo_name = input(
-        "Repository Name: "
-    )
+    print("\n--- Update Repository ---")
 
-    new_license = input(
-        "New License: "
-    )
+    repo_name = input("Repository Name: ")
+    new_license = input("New License: ")
 
     session.execute("""
     UPDATE repositories
     SET license=%s
     WHERE repo_name=%s
-    """,
-    (
-        new_license,
-        repo_name
-    ))
+    """, (new_license, repo_name))
 
     print("Repository updated successfully.")
-# DELETE
 
-def delete_repository(session):
 
-    print("\nDelete Repository")
+def delete_repository():
 
-    repo_name = input(
-        "Repository Name: "
-    )
+    print("\n--- Delete Repository ---")
+
+    repo_name = input("Repository Name: ")
 
     session.execute("""
     DELETE FROM repositories
     WHERE repo_name=%s
-    """,
-    [repo_name])
+    """, [repo_name])
 
     print("Repository deleted successfully.")
-# FEATURE 1
-# LICENSE DISTRIBUTION
-query =
-    """
-    Counts repositories by license.
-    """
+
+
+# =====================================================
+# ANALYTICS FUNCTIONS
+# =====================================================
+
+def license_distribution():
 
     rows = session.execute("""
     SELECT license
     FROM repositories
     """)
 
-    licenses = []
+    licenses = [row.license for row in rows]
 
-    for row in rows:
-
-        licenses.append(
-            row.license
-        )
-
-    counts = Counter(
-        licenses
-    )
+    counts = Counter(licenses)
 
     print("\nTop License Distribution\n")
 
     for license_name, count in counts.most_common(10):
+        print(f"{license_name:<20} {count}")
 
-        print(f"{license_name:<20} {count}"        
-# FEATURE 2
-# SEARCH BY LICENSE
-query ="""Displays repositories that use a specific license."""
+#FUNCTION 1
+def search_by_license():
 
     target_license = input(
         "\nEnter License Name: "
@@ -204,192 +152,125 @@ query ="""Displays repositories that use a specific license."""
 
         if row.license == target_license:
 
-            print(
-                row.repo_name
-            )
-
+            print(row.repo_name)
             total += 1
 
-    print(
-        f"\nTotal Found: {total}"
-    )
-    
-# FEATURE 3
-# LICENSE VISUALIZATION
-query ="""Creates bar chart oftop 10 licenses."""
+    print(f"\nTotal Found: {total}")
+
+
+def visualize_licenses():
 
     rows = session.execute("""
     SELECT license
     FROM repositories
     """)
 
-    licenses = []
+    licenses = [row.license for row in rows]
 
-    for row in rows:
-
-        licenses.append(
-            row.license
-        )
-
-    counts = Counter(
-        licenses
-    )
+    counts = Counter(licenses)
 
     top_ten = counts.most_common(10)
 
-    labels = []
-
-    values = []
-
-    for item in top_ten:
-
-        labels.append(item[0])
-
-        values.append(item[1])
+    labels = [item[0] for item in top_ten]
+    values = [item[1] for item in top_ten]
 
     plt.figure(figsize=(10, 6))
+    plt.bar(labels, values)
 
-    plt.bar(
-        labels,
-        values
-    )
-
-    plt.title(
-        "Top 10 GitHub Licenses"
-    )
-
-    plt.xlabel(
-        "License Type"
-    )
-
-    plt.ylabel(
-        "Number of Repositories"
-    )
+    plt.title("Top 10 GitHub Licenses")
+    plt.xlabel("License Type")
+    plt.ylabel("Number of Repositories")
 
     plt.xticks(rotation=45)
-
     plt.tight_layout()
 
     plt.show()
-    
+
+
+def record_count():
+
+    rows = session.execute("""
+    SELECT repo_name
+    FROM repositories
+    """)
+
+    count = len(list(rows))
+
+    print(f"\nTotal Records: {count}")
+
+
+# =====================================================
 # MENU
+# =====================================================
+
 def menu():
-
-    session = connect_database()
-
-    create_keyspace_and_table(
-        session
-    )
-
-    session.set_keyspace(
-        "github_license_db"
-    )
-
-    # *****************************
-    # AUTO IMPORT DATASET
-    # *****************************
-
-    if is_table_empty(session):
-
-        print(
-            "\nLoading Licenses.json..."
-        )
-
-        load_json_data(
-            session,
-            "Licenses.json"
-        )
-
-        print(
-            "Dataset loaded successfully."
-        )
-
-    else:
-
-        print(
-            "\nDataset already exists."
-        )
-
-    # **********************************
-    # APPLICATION MENU
-    # **********************************
 
     while True:
 
-        print("\n")
-        print("=" * 55)
-        print("GitHub License Analytics System")
-        print("=" * 55)
+        print("\n" + "=" * 60)
+        print("      GitHub License Analytics System")
+        print("=" * 60)
 
-        print("1. Create Repository")
-        print("2. Read Repository")
-        print("3. Update Repository")
-        print("4. Delete Repository")
-        print("5. License Distribution")
-        print("6. Search By License")
-        print("7. Visualize Licenses")
-        print("8. Exit")
+        print("\nCRUD OPERATIONS")
+        print("  1. Create Repository")
+        print("  2. Read Repository")
+        print("  3. Update Repository")
+        print("  4. Delete Repository")
 
-        choice = input(
-            "\nEnter Choice: "
-        )
+        print("\nANALYTICS")
+        print("  5. License Distribution")
+        print("  6. Search by License")
+        print("  7. Visualize Top Licenses")
+
+        print("\nSYSTEM")
+        print("  8. Show Record Count")
+        print("  9. Exit")
+
+        print("-" * 60)
+
+        choice = input("Select an option (1-9): ")
 
         if choice == "1":
-
-            create_repository(
-                session
-            )
+            create_repository()
 
         elif choice == "2":
-
-            read_repository(
-                session
-            )
+            read_repository()
 
         elif choice == "3":
-
-            update_repository(
-                session
-            )
+            update_repository()
 
         elif choice == "4":
-
-            delete_repository(
-                session
-            )
+            delete_repository()
 
         elif choice == "5":
-
-            license_distribution(
-                session
-            )
+            license_distribution()
 
         elif choice == "6":
-
-            search_by_license(
-                session
-            )
+            search_by_license()
 
         elif choice == "7":
-
-            visualize_licenses(
-                session
-            )
+            visualize_licenses()
 
         elif choice == "8":
+            record_count()
 
-            print(
-                "\nProgram terminated."
-            )
+        elif choice == "9":
+
+            print("\nThank you for using")
+            print("GitHub License Analytics System")
+            print("Goodbye!")
 
             break
 
         else:
 
-            print(
-                "\nInvalid choice."
-            )
+            print("\nInvalid selection. Try again.")
+
+
+# =====================================================
 # MAIN
-if __name__ == "__menu__":
+# =====================================================
+
+if __name__ == "__main__":
 
     menu()
