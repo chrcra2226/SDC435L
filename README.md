@@ -5,13 +5,13 @@ Lab files for the class group project.
 
 This Python application integrates with multiple database technologies to store and analyze data from the GitHub Archive dataset (GitHubArchive-Dataset.zip). Each part of the project introduces a new database, building toward a comprehensive understanding of how different data storage systems handle the same real-world data.
 
-This is a five-part group project. Part 1 (Redis) and Part 2 (mongodb) are fully implemented. Parts 3–5 are placeholders and will be completed in future weeks.
+This is a five-part group project. Part 1 (Redis), Part 2 (MongoDB), and Part 3 (Cassandra) are fully implemented. Parts 4–5 are placeholders and will be completed in future weeks.
 
 | Part | Database  | Type                  | Status            |
 |------|-----------|-----------------------|-------------------|
 | 1    | Redis     | Key-Value (In-Memory) | Complete          |
-| 2    | MongoDB   | Document              | completed         |
-| 3    | Cassandra | Wide-Column           | Under Construction|
+| 2    | MongoDB   | Document              | Complete          |
+| 3    | Cassandra | Wide-Column           | Complete          |
 | 4    | Neo4j     | Graph                 | Under Construction|
 | 5    | SQLite    | Relational            | Under Construction|
 
@@ -46,11 +46,17 @@ project/
 
 ├── mongodb_features.py   # MongoDB: three analytical features 
 
+├── Cassandra.py          # Cassandra: Functionality (Both CRUD and 3 features)
+
+├── MenuCassandra.py      # Cassandra: Menu display
+
 ├── README.md             # This file
 
 └── data/
 
 ---├── Commits.json       # Redis dataset (GitHub commits)
+
+---├── Licenses.json      # Cassandra dataset (GitHub Licenses)
     
 ---└── Sample_repos.json  # MongoDB dataset (repositories)
 
@@ -66,6 +72,10 @@ mongodb_crud.py — Handles MongoDB connection, dataset loading, and CRUD operat
 
 mongodb_features.py — Implements analytical queries using MongoDB aggregation pipelines.
 
+Cassandra.py — Handles Cassandra connection, keyspace and table creation, data loading from Licenses.json, and all CRUD and analytical operations for the Cassandra submenu.
+
+MenuCassandra.py - Handles the menu functionality for Cassandra section
+
 ### Navigation Pathways
 
 #### Main Menu
@@ -78,7 +88,7 @@ python menu.py
 
 ├── 2. MongoDB    → MongoDB Submenu (fully implemented)
 
-├── 3. Cassandra  → "Option under construction"
+├── 3. Cassandra  → Cassandra Submenu (fully implemented)
 
 ├── 4. Neo4j      → "Option under construction"
 
@@ -149,6 +159,44 @@ MongoDB Menu
 │
 
 └── 0. Back to main menu
+
+#### Cassandra Submenu
+
+Cassandra Menu
+
+│
+
+├── CRUD Operations
+
+│     1. Create Repository
+
+│     2. Read Repository
+
+│     3. Update Repository
+
+│     4. Delete Repository
+
+│
+
+├── Analytics
+
+│     5. License Distribution
+
+│     6. Search by License
+
+│     7. Visualize Top Licenses
+
+│
+
+├── System
+
+│     8. Show Record Count
+
+│     9. Exit
+
+│
+
+└── Back to main menu
 
 
 ## Part 1 — Redis Features
@@ -244,6 +292,51 @@ Each document includes:
 | Storage Model  | Document-based NoSQL storage         |
 | Analytics      | Aggregation pipelines for analytics  |
 
+## Part 3 — Cassandra Features
+
+### CRUD Operations
+
+Create — Insert repository and license records into Cassandra from Licenses.json
+
+Read — Query repositories by name from the repositories table
+
+Update — Modify repository license values by repo name
+
+Delete — Remove repository records by repo name
+
+### Analytical Features
+
+Feature 1 — License Distribution
+Queries all license values from the repositories table and uses Python Counter to rank the top 10 most common licenses.
+
+Feature 2 — Search by License
+Prompts the user for a license name and returns all repositories using that license, along with a total count.
+
+Feature 3 — Visualize Top Licenses
+Uses matplotlib to render a bar chart of the top 10 most common licenses across all stored repositories.
+
+### Cassandra Data Model
+
+Keyspace: github_license_db
+
+Table: repositories
+
+FieldTypeDescriptioniduuidAuto-generated unique identifier (PRIMARY KEY)repo_nametextFull repository name (e.g. owner/repo)licensetextLicense type associated with the repository
+| Field        | Type   | Description                                   |
+|--------------|--------|-----------------------------------------------|
+| `id`         | uuid   | Auto-generated unique identifier (PRIMARY KEY)|
+| `repo_name`  | String | Full repository name (e.g. owner/repo)        |
+| `license`    | String | License type associated with the repository   |
+
+### Cassandra Technology Stack
+
+| Component      | Details                              |
+|----------------|--------------------------------------|
+| Database       | Cassandra 4.0+Python                 |
+| Python Driver  | `cassandra-driver`                   |
+| Storage Model  | Wide-column NoSQL storage            |
+| Analytics      | Python-side aggregation with Counter |
+
 ## Dependencies
 
 ### Install required packages:
@@ -252,15 +345,22 @@ pip install redis
 
 pip install pymongo
 
+pip install cassandra-driver
+
+pip install matplotlib
+
 ## Setup & Running the Application
 
-1. Start MongoDB and Redis servers
+1. Start MongoDB, Redis, and Cassandra servers
 
 Redis:
 redis-server
 
 MongoDB:
 mongod
+
+Cassandra:
+sudo systemctl start cassandra
 
 2. Run application
 
@@ -282,6 +382,14 @@ MongoDB:
 - Loads Sample_repos.json
 - Run CRUD and analytics features (options 2-8)
 
+Cassandra:
+
+-Select option 3
+-Licenses.json is loaded automatically on startup
+-Run CRUD operations (options 1-4)
+-Run analytics features (options 5-7)
+-View record count (option 8)
+
 Team Members
 
 Christopher Crayton, Elvis Ngawe, Michael Winstead
@@ -290,5 +398,6 @@ Notes
 
 - Redis uses JSON string storage with sorted sets for analytics
 - MongoDB uses document storage with aggregation pipelines
-- Both databases analyze related GitHub dataset structures but in different models
-- Future phases will add Cassandra, Neo4j, and SQLite implementations
+- Cassandra uses a wide-column keyspace with uuid primary keys and Python-side analytics
+- Both Redis and MongoDB analyze GitHub commit and repository data; Cassandra analyzes repository license data
+- Future phases will add Neo4j, and SQLite implementations
