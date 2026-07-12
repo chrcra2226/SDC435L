@@ -307,12 +307,15 @@ Delete — Remove repository records by repo name
 ### Analytical Features
 
 Feature 1 — License Distribution
+
 Queries all license values from the repositories table and uses Python Counter to rank the top 10 most common licenses.
 
 Feature 2 — Search by License
+
 Prompts the user for a license name and returns all repositories using that license, along with a total count.
 
 Feature 3 — Visualize Top Licenses
+
 Uses matplotlib to render a bar chart of the top 10 most common licenses across all stored repositories.
 
 ### Cassandra Data Model
@@ -384,11 +387,11 @@ MongoDB:
 
 Cassandra:
 
--Select option 3
--Licenses.json is loaded automatically on startup
--Run CRUD operations (options 1-4)
--Run analytics features (options 5-7)
--View record count (option 8)
+- Select option 3
+- Licenses.json is loaded automatically on startup
+- Run CRUD operations (options 1-4)
+- Run analytics features (options 5-7)
+- View record count (option 8)
 
 Team Members
 
