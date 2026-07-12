@@ -4,6 +4,8 @@
 
 import json
 from cassandra.cluster import Cluster
+from collections import Counter
+import matplotlib.pyplot as plt
 
 
 # =====================================================

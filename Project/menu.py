@@ -31,6 +31,9 @@ import redis_features
 import mongodb_crud
 import mongodb_features
 from cassandra.cluster import Cluster
+from collections import Counter
+import matplotlib.pyplot as plt
+
 
 
 # ─────────────────────────────────────────
@@ -398,6 +401,15 @@ def run_mongodb_menu(data_filepath="data/Sample_Repos.json"):
 
         else:
             print("[WARN] Invalid choice. Try again.")
+# =======================================================
+# CASSANDRA Menu
+# =======================================================
+def run_cassandra_menu():
+    menu()
+
+# =====================================================
+# MAIN APPLICATION ENTRY POINT
+# ======================================================
 def run_app():
     """
     Run the top-level database selection menu.
@@ -429,6 +441,7 @@ def run_app():
 
         else:
             print("  [WARN] Invalid choice. Please try again.")
+
 # =====================================================
 # CONNECT TO CASSANDRA
 # =====================================================
@@ -460,6 +473,18 @@ CREATE TABLE IF NOT EXISTS repositories (
 """)
 
 print("Database setup complete.")
+
+# =====================================================
+# Load data from Licenses.json file into Cassandra
+# =====================================================
+with open("SDC435L-main/Project/data/Licenses.json", "r") as f:
+    for line in f:
+        record = json.loads(line.strip())
+        session.execute("""
+            INSERT INTO repositories (repo_name, license)
+            VALUES (%s, %s)
+        """, (record["repo_name"], record["license"]))
+print("Licenses data loaded into Cassandra.")
 
 # =====================================================
 # CRUD FUNCTIONS
