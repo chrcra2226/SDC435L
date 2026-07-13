@@ -362,9 +362,11 @@ Servers connect when corresponding database is selected.
 Cassandra:
 sudo systemctl start cassandra
 
-2. Run application from whichever folder user saves it to. Do not change directory into Project folder.
+2. Run application from within Project folder
 
-python3 SDC435L-main/Project/menu.py
+cd SDC435L-main/Project
+
+python3 menu.py
 
 ## Recommended Workflow
 
