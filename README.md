@@ -354,20 +354,17 @@ pip install matplotlib
 
 ## Setup & Running the Application
 
-1. Start MongoDB, Redis, and Cassandra servers
+1. Start database servers
 
-Redis:
-redis-server
-
-MongoDB:
-mongod
+Redis And MongoDB:
+Servers connect when corresponding database is selected.
 
 Cassandra:
 sudo systemctl start cassandra
 
-2. Run application
+2. Run application from whichever folder user saves it to. Do not change directory into Project folder.
 
-python menu.py
+python3 SDC435L-main/Project/menu.py
 
 ## Recommended Workflow
 
