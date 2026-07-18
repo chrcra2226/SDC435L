@@ -357,13 +357,12 @@ def run_mongodb_menu(data_filepath="data/Sample_Repos.json"):
     try:
         import mongodb_crud
         import mongodb_features
+        collection = mongodb_crud.connect_to_mongodb()
     except Exception as e:
         print("\n [ERROR] Failed to import MongoDB modules.")
-        print(" Please ensure you have MongoDB installed and running, or skip this option.")
+        print(" Please ensure you have MongoDB installed, or skip this option.")
         print(f" Details: {e}")
         return
-
-    collection = mongodb_crud.connect_to_mongodb()
 
     if collection is None:
         print("Cannot connect to MongoDB.")
@@ -475,17 +474,18 @@ def run_cassandra_menu():
     # =====================================================
     try:
         from cassandra.cluster import Cluster
+
+        cluster = Cluster()
+        session = cluster.connect()
     except Exception as e:
         print("\n [ERROR] Failed to import Cassandra module.")
-        print(" This is likely due to Windows not having compatibility with cassandra-driver.")
+        print(" This is likely due to your Windows environment not having compatibility with cassandra-driver.")
         print(" Please run this option on Ubuntu.")
         print(f" Details: {e}")
         return
 
     print("Connecting to local Cassandra database...")
 
-    cluster = Cluster()
-    session = cluster.connect()
 
     # =====================================================
     # DATABASE SETUP
@@ -687,7 +687,7 @@ def run_cassandra_menu():
 
 
     # =====================================================
-    # MENU
+    #  Cassandra MENU
     # =====================================================
 
     def menu():
@@ -794,25 +794,21 @@ def run_neo4j_menu(data_filepath="data/Sample_Files.json"):
     try:
         import neo4j_crud
         import neo4j_features
+
+        # Prompt for Neo4j credentials — defaults shown in brackets
+        print("\n  Neo4j Connection Setup")
+        uri      = input("  URI      [bolt://localhost:7687]: ").strip() or "bolt://localhost:7687"
+        user     = input("  Username [neo4j]: ").strip() or "neo4j"
+        password = input("  Password [Password1]: ").strip() or "Password1"
+        driver = neo4j_crud.connect_to_neo4j(uri, user, password)
+
     except Exception as e:
         print("\n [ERROR] Failed to import Neo4j modules.")
-        print(" This is likely due to Ubuntu not having compatibility with Neo4j.")
+        print(" This is likely due to your Ubuntu  environment not having compatibility with Neo4j.")
         print(" Please ensure you have Neo4j installed and running, or skip this option.")
         print(f" Details: {e}")
         return
 
-    # Prompt for Neo4j credentials — defaults shown in brackets
-    print("\n  Neo4j Connection Setup")
-    uri      = input("  URI      [bolt://localhost:7687]: ").strip() or "bolt://localhost:7687"
-    user     = input("  Username [neo4j]: ").strip() or "neo4j"
-    password = input("  Password [Password1]: ").strip() or "Password1"
-
-    # Establish Neo4j connection via the CRUD module
-    try:
-        driver = neo4j_crud.connect_to_neo4j(uri, user, password)
-    except ConnectionError as e:
-        print(e)
-        return
 
     while True:
         print_neo4j_menu()
