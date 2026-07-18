@@ -35,7 +35,7 @@ import os
 #  CONNECTION
 # ─────────────────────────────────────────
 
-def connect_to_neo4j(uri="bolt://localhost:7687", user="neo4j", password="password"):
+def connect_to_neo4j(uri="bolt://localhost:7687", user="neo4j", password="Password1"):
     """
     Establish and return a Neo4j driver connection.
     Raises ConnectionError if Neo4j is unreachable.
@@ -43,7 +43,7 @@ def connect_to_neo4j(uri="bolt://localhost:7687", user="neo4j", password="passwo
     Args:
         uri      (str): Neo4j Bolt URI. Defaults to 'bolt://localhost:7687'.
         user     (str): Neo4j username. Defaults to 'neo4j'.
-        password (str): Neo4j password. Defaults to 'password'.
+        password (str): Neo4j password. Defaults to 'Password1'.
 
     Returns:
         neo4j.GraphDatabase.driver: An active Neo4j driver instance.

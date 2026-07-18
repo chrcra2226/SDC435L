@@ -38,138 +38,8 @@ Usage:
 """
 
 import json
-import redis_crud
-import redis_features
-import mongodb_crud
-import mongodb_features
-import neo4j_crud
-import neo4j_features
-from cassandra.cluster import Cluster
 from collections import Counter
 import matplotlib.pyplot as plt
-
-
-
-# ─────────────────────────────────────────
-#  REDIS DISPLAY HELPERS
-# ─────────────────────────────────────────
-
-def display_top_repos(client, top_n=10):
-    """
-    Print the most active repositories ranking to the console.
-    Calls redis_features.get_top_repos() to fetch data.
-
-    Args:
-        client (redis.Redis): Active Redis client.
-        top_n (int): Number of repositories to display.
-    """
-    repos = redis_features.get_top_repos(client, top_n)
-
-    print(f"\n{'─'*50}")
-    print(f"  Top {top_n} Most Active Repositories (by commit count)")
-    print(f"{'─'*50}")
-
-    if not repos:
-        print("  No data found. Load a dataset first (option 1).")
-        print(f"{'─'*50}\n")
-        return
-
-    for rank, (repo, count) in enumerate(repos, start=1):
-        bar = "█" * min(count, 30)  # ASCII bar capped at 30 chars wide
-        print(f"  {rank:>2}. {repo:<35} {count:>5} commits  {bar}")
-
-    print(f"{'─'*50}\n")
-
-
-def display_commit_keyword_analysis(client):
-    """
-    Print commit message keyword frequency analysis to the console.
-    Calls redis_features.get_commit_keyword_frequencies() to fetch data.
-
-    Args:
-        client (redis.Redis): Active Redis client.
-    """
-    frequencies = redis_features.get_commit_keyword_frequencies(client, top_n=15)
-
-    print(f"\n{'─'*55}")
-    print("  Commit Message Keyword Frequency Analysis")
-    print("  (most common first word of commit subjects)")
-    print(f"{'─'*55}")
-
-    if not frequencies:
-        print("  No data found. Load a dataset first (option 1).")
-        print(f"{'─'*55}\n")
-        return
-
-    total = sum(count for _, count in frequencies)
-
-    for keyword, count in frequencies:
-        pct = (count / total * 100) if total > 0 else 0
-        bar = "█" * int(pct / 2)  # Scale to percentage
-        print(f"  {keyword:<20} {count:>6} ({pct:5.1f}%)  {bar}")
-
-    print(f"{'─'*55}")
-    print(f"  Total (top 15 keywords): {total}")
-    print(f"{'─'*55}\n")
-
-
-def display_author_contribution_history(client, author_name):
-    """
-    Print a single author's contribution history to the console.
-    Calls redis_features.get_author_contribution_history() to fetch data.
-
-    Args:
-        client (redis.Redis): Active Redis client.
-        author_name (str): The commit author's name to look up.
-    """
-    history = redis_features.get_author_contribution_history(client, author_name)
-
-    print(f"\n{'─'*50}")
-    print(f"  Contribution History: {history['author_name']}")
-    print(f"{'─'*50}")
-    print(f"  Total commits recorded: {history['total_commits']}")
-
-    commits = history["recent_commits"]
-    if not commits:
-        print("  No commits found for this author.")
-        print(f"{'─'*50}\n")
-        return
-
-    print(f"  Most recent {len(commits)} commit(s):\n")
-    for commit in commits:
-        repo = redis_crud.get_repo_name(commit)
-        subject = commit.get("subject", "N/A")
-        sha = commit.get("commit", "N/A")
-        print(f"    Repo: {repo}")
-        print(f"     SHA: {sha[:12]}...  |  Subject: {subject}\n")
-
-    print(f"{'─'*50}\n")
-
-
-def display_top_contributors(client, top_n=10):
-    """
-    Print the top contributors leaderboard to the console.
-    Calls redis_features.get_top_contributors() to fetch data.
-
-    Args:
-        client (redis.Redis): Active Redis client.
-        top_n (int): Number of contributors to display.
-    """
-    contributors = redis_features.get_top_contributors(client, top_n)
-
-    print(f"\n{'─'*50}")
-    print(f"  Top {top_n} Contributors (by commit count)")
-    print(f"{'─'*50}")
-
-    if not contributors:
-        print("  No data found. Load a dataset first (option 1).")
-        print(f"{'─'*50}\n")
-        return
-
-    for rank, (author, count) in enumerate(contributors, start=1):
-        print(f"  {rank:>2}. {author:<35} {count:>5} commits")
-
-    print(f"{'─'*50}\n")
 
 
 # ─────────────────────────────────────────
@@ -191,6 +61,42 @@ def print_main_menu():
     print("    0. Exit")
     print("=" * 50)
 
+# =====================================================
+# MAIN APPLICATION ENTRY POINT
+# ======================================================
+def run_app():
+    """
+    Run the top-level database selection menu.
+    Routes to the appropriate database submenu based on user choice.
+    Placeholder databases print a coming-soon message and return here.
+    """
+    while True:
+        print_main_menu()
+        choice = input("  Enter choice: ").strip()
+
+        if choice == "1":
+            # Redis — fully implemented
+            run_redis_menu()
+        elif choice == "2":
+            #Mongodb - fully implemented
+            run_mongodb_menu()
+        elif choice == "3":
+            # Cassandra — fully implemented
+            run_cassandra_menu()
+        elif choice == "4":
+            # Neo4j — fully implemented
+            run_neo4j_menu()
+        elif choice == "5":
+            # SQLite — not yet implemented
+            print(f"\n  [Option under construction] SQLite coming soon.")
+            print("  Returning to main menu...")
+
+        elif choice == "0":
+            print("\n  Goodbye!\n")
+            break
+
+        else:
+            print("  [WARN] Invalid choice. Please try again.")
 
 # ─────────────────────────────────────────
 #  REDIS SUBMENU
@@ -217,7 +123,9 @@ def print_redis_menu():
     print("    0. Back to main menu")
     print("=" * 50)
 
-
+# ─────────────────────────────────────────
+#  REDIS Connection and Submenu Loop
+# ─────────────────────────────────────────
 def run_redis_menu(data_filepath="data/Commits.json"):
     """
     Connect to Redis and run the Redis submenu loop.
@@ -227,8 +135,139 @@ def run_redis_menu(data_filepath="data/Commits.json"):
         data_filepath (str): Default path to the commit data file
                               (Commits.json from GitHubArchive-Dataset.zip).
     """
-    # Establish Redis connection via the CRUD module
-    client = redis_crud.connect_to_redis()
+    try:
+        import redis_crud
+        import redis_features
+        
+        # Establish Redis connection via the CRUD module
+        client = redis_crud.connect_to_redis()
+
+    except Exception as e:
+        print("\n [ERROR] Failed to import Redis modules.")
+        print(" Please ensure you have Redis installed, or skip this option.")
+        print(f" Details: {e}")
+        return
+
+    # ─────────────────────────────────────────
+    #  REDIS DISPLAY HELPERS
+    # ─────────────────────────────────────────
+
+    def display_top_repos(client, top_n=10):
+        """
+        Print the most active repositories ranking to the console.
+        Calls redis_features.get_top_repos() to fetch data.
+
+        Args:
+            client (redis.Redis): Active Redis client.
+            top_n (int): Number of repositories to display.
+        """
+        repos = redis_features.get_top_repos(client, top_n)
+
+        print(f"\n{'─'*50}")
+        print(f"  Top {top_n} Most Active Repositories (by commit count)")
+        print(f"{'─'*50}")
+
+        if not repos:
+            print("  No data found. Load a dataset first (option 1).")
+            print(f"{'─'*50}\n")
+            return
+
+        for rank, (repo, count) in enumerate(repos, start=1):
+            bar = "█" * min(count, 30)  # ASCII bar capped at 30 chars wide
+            print(f"  {rank:>2}. {repo:<35} {count:>5} commits  {bar}")
+
+        print(f"{'─'*50}\n")
+
+
+    def display_commit_keyword_analysis(client):
+        """
+        Print commit message keyword frequency analysis to the console.
+        Calls redis_features.get_commit_keyword_frequencies() to fetch data.
+
+        Args:
+            client (redis.Redis): Active Redis client.
+        """
+        frequencies = redis_features.get_commit_keyword_frequencies(client, top_n=15)
+
+        print(f"\n{'─'*55}")
+        print("  Commit Message Keyword Frequency Analysis")
+        print("  (most common first word of commit subjects)")
+        print(f"{'─'*55}")
+
+        if not frequencies:
+            print("  No data found. Load a dataset first (option 1).")
+            print(f"{'─'*55}\n")
+            return
+
+        total = sum(count for _, count in frequencies)
+
+        for keyword, count in frequencies:
+            pct = (count / total * 100) if total > 0 else 0
+            bar = "█" * int(pct / 2)  # Scale to percentage
+            print(f"  {keyword:<20} {count:>6} ({pct:5.1f}%)  {bar}")
+
+        print(f"{'─'*55}")
+        print(f"  Total (top 15 keywords): {total}")
+        print(f"{'─'*55}\n")
+
+
+    def display_author_contribution_history(client, author_name):
+        """
+        Print a single author's contribution history to the console.
+        Calls redis_features.get_author_contribution_history() to fetch data.
+
+        Args:
+            client (redis.Redis): Active Redis client.
+            author_name (str): The commit author's name to look up.
+        """
+        history = redis_features.get_author_contribution_history(client, author_name)
+
+        print(f"\n{'─'*50}")
+        print(f"  Contribution History: {history['author_name']}")
+        print(f"{'─'*50}")
+        print(f"  Total commits recorded: {history['total_commits']}")
+
+        commits = history["recent_commits"]
+        if not commits:
+            print("  No commits found for this author.")
+            print(f"{'─'*50}\n")
+            return
+
+        print(f"  Most recent {len(commits)} commit(s):\n")
+        for commit in commits:
+            repo = redis_crud.get_repo_name(commit)
+            subject = commit.get("subject", "N/A")
+            sha = commit.get("commit", "N/A")
+            print(f"    Repo: {repo}")
+            print(f"     SHA: {sha[:12]}...  |  Subject: {subject}\n")
+
+        print(f"{'─'*50}\n")
+
+
+    def display_top_contributors(client, top_n=10):
+        """
+        Print the top contributors leaderboard to the console.
+        Calls redis_features.get_top_contributors() to fetch data.
+
+        Args:
+            client (redis.Redis): Active Redis client.
+            top_n (int): Number of contributors to display.
+        """
+        contributors = redis_features.get_top_contributors(client, top_n)
+
+        print(f"\n{'─'*50}")
+        print(f"  Top {top_n} Contributors (by commit count)")
+        print(f"{'─'*50}")
+
+        if not contributors:
+            print("  No data found. Load a dataset first (option 1).")
+            print(f"{'─'*50}\n")
+            return
+
+        for rank, (author, count) in enumerate(contributors, start=1):
+            print(f"  {rank:>2}. {author:<35} {count:>5} commits")
+
+        print(f"{'─'*50}\n")
 
     while True:
         print_redis_menu()
@@ -309,10 +348,20 @@ def run_redis_menu(data_filepath="data/Commits.json"):
 
         else:
             print("  [WARN] Invalid choice. Please try again.")
+
 # =====================================================
 # MONGODB MENU 
 # =====================================================
 def run_mongodb_menu(data_filepath="data/Sample_Repos.json"):
+
+    try:
+        import mongodb_crud
+        import mongodb_features
+    except Exception as e:
+        print("\n [ERROR] Failed to import MongoDB modules.")
+        print(" Please ensure you have MongoDB installed and running, or skip this option.")
+        print(f" Details: {e}")
+        return
 
     collection = mongodb_crud.connect_to_mongodb()
 
@@ -416,43 +465,6 @@ def run_mongodb_menu(data_filepath="data/Sample_Repos.json"):
         else:
             print("[WARN] Invalid choice. Try again.")
 
-# =====================================================
-# MAIN APPLICATION ENTRY POINT
-# ======================================================
-def run_app():
-    """
-    Run the top-level database selection menu.
-    Routes to the appropriate database submenu based on user choice.
-    Placeholder databases print a coming-soon message and return here.
-    """
-    while True:
-        print_main_menu()
-        choice = input("  Enter choice: ").strip()
-
-        if choice == "1":
-            # Redis — fully implemented
-            run_redis_menu()
-        elif choice == "2":
-            #Mongodb - fully implemented
-            run_mongodb_menu()
-        elif choice == "3":
-            # Cassandra — fully implemented
-            run_cassandra_menu()
-        elif choice == "4":
-            # Neo4j — fully implemented
-            run_neo4j_menu()
-        elif choice == "5":
-            # SQLite — not yet implemented
-            print(f"\n  [Option under construction] SQLite coming soon.")
-            print("  Returning to main menu...")
-
-        elif choice == "0":
-            print("\n  Goodbye!\n")
-            break
-
-        else:
-            print("  [WARN] Invalid choice. Please try again.")
-
 # =======================================================
 # CASSANDRA Menu
 # =======================================================
@@ -461,6 +473,14 @@ def run_cassandra_menu():
     # =====================================================
     # CONNECT TO CASSANDRA
     # =====================================================
+    try:
+        from cassandra.cluster import Cluster
+    except Exception as e:
+        print("\n [ERROR] Failed to import Cassandra module.")
+        print(" This is likely due to Windows not having compatibility with cassandra-driver.")
+        print(" Please run this option on Ubuntu.")
+        print(f" Details: {e}")
+        return
 
     print("Connecting to local Cassandra database...")
 
@@ -771,11 +791,21 @@ def run_neo4j_menu(data_filepath="data/Sample_Files.json"):
         data_filepath (str): Default path to the file data file
                               (Sample_Files.json from GitHubArchive-Dataset.zip).
     """
+    try:
+        import neo4j_crud
+        import neo4j_features
+    except Exception as e:
+        print("\n [ERROR] Failed to import Neo4j modules.")
+        print(" This is likely due to Ubuntu not having compatibility with Neo4j.")
+        print(" Please ensure you have Neo4j installed and running, or skip this option.")
+        print(f" Details: {e}")
+        return
+
     # Prompt for Neo4j credentials — defaults shown in brackets
     print("\n  Neo4j Connection Setup")
     uri      = input("  URI      [bolt://localhost:7687]: ").strip() or "bolt://localhost:7687"
     user     = input("  Username [neo4j]: ").strip() or "neo4j"
-    password = input("  Password [password]: ").strip() or "password"
+    password = input("  Password [Password1]: ").strip() or "Password1"
 
     # Establish Neo4j connection via the CRUD module
     try:
