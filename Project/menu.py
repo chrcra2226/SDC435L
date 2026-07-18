@@ -10,17 +10,29 @@ where each record represents a single Git commit (author, committer,
 repo_name, commit SHA, message/subject, parent SHA(s), tree SHA).
 
 Structure:
-  Main Menu  →  1. Redis   (fully implemented)
-                2. MongoDB     (fully implemented)
-                3. Cassandra   (fully implemented)
-                4. Neo4j       (coming soon)
-                5. SQLite      (coming soon)
+  Main Menu  →  1. Redis      (fully implemented)
+                2. MongoDB    (fully implemented)
+                3. Cassandra  (fully implemented)
+                4. Neo4j      (fully implemented)
+                5. SQLite     (coming soon)
                 0. Exit
 
   Redis Submenu → CRUD operations + 3 analytical features
     CRUD calls    → redis_crud.py
     Feature calls → redis_features.py
 
+  MongoDB Submenu → CRUD operations + 3 analytical features
+    CRUD calls    → mongodb_crud.py
+    Feature calls → mongodb_features.py
+ 
+  Cassandra Submenu → CRUD operations + 3 analytical features
+    CRUD calls    → menu.py (run_cassandra_menu)
+    Feature calls → menu.py (run_cassandra_menu)
+ 
+  Neo4j Submenu → CRUD operations + 3 analytical features
+    CRUD calls    → neo4j_crud.py
+    Feature calls → neo4j_features.py
+    
 Usage:
   python menu.py
 """
@@ -30,6 +42,8 @@ import redis_crud
 import redis_features
 import mongodb_crud
 import mongodb_features
+import neo4j_crud
+import neo4j_features
 from cassandra.cluster import Cluster
 from collections import Counter
 import matplotlib.pyplot as plt
@@ -422,12 +436,14 @@ def run_app():
             #Mongodb - fully implemented
             run_mongodb_menu()
         elif choice == "3":
-            # cassandra — fully implemented
+            # Cassandra — fully implemented
             run_cassandra_menu()
-        elif choice in ( "4", "5"):
-            # Placeholder databases — not yet implemented
-            db_names = { "4": "Neo4j", "5": "SQLite"}
-            print(f"\n  [Option under construction] {db_names[choice]} coming soon.")
+        elif choice == "4":
+            # Neo4j — fully implemented
+            run_neo4j_menu()
+        elif choice == "5":
+            # SQLite — not yet implemented
+            print(f"\n  [Option under construction] SQLite coming soon.")
             print("  Returning to main menu...")
 
         elif choice == "0":
@@ -717,6 +733,137 @@ def run_cassandra_menu():
                 print("\nInvalid selection. Try again.")
     menu()
           
+# ─────────────────────────────────────────
+#  NEO4J SUBMENU
+# ─────────────────────────────────────────
+
+def print_neo4j_menu():
+    """Display the Neo4j-specific CRUD and features submenu."""
+    print("\n" + "=" * 55)
+    print("   Neo4j — GitHub Repository File Graph")
+    print("=" * 55)
+    print("  CRUD Operations:")
+    print("    1. Load & store all files from Sample_Files.json")
+    print("    2. Read a specific file by blob ID")
+    print("    3. Update a file property")
+    print("    4. Delete a file by blob ID")
+    print("    5. List stored files")
+    print()
+    print("  Features:")
+    print("    6. [Feature 1] Top repositories by file count")
+    print("    7. [Feature 2] Shared files across repositories")
+    print("    8. [Feature 3] Visualize repository file counts")
+    print()
+    print("    0. Back to main menu")
+    print("=" * 55)
+
+
+def run_neo4j_menu(data_filepath="data/Sample_Files.json"):
+    """
+    Connect to Neo4j and run the Neo4j submenu loop.
+    Returns to the main menu when the user enters 0.
+
+    Prompts the user for Neo4j credentials on startup so the
+    application works with any Neo4j instance without hardcoding.
+
+    Args:
+        data_filepath (str): Default path to the file data file
+                              (Sample_Files.json from GitHubArchive-Dataset.zip).
+    """
+    # Prompt for Neo4j credentials — defaults shown in brackets
+    print("\n  Neo4j Connection Setup")
+    uri      = input("  URI      [bolt://localhost:7687]: ").strip() or "bolt://localhost:7687"
+    user     = input("  Username [neo4j]: ").strip() or "neo4j"
+    password = input("  Password [password]: ").strip() or "password"
+
+    # Establish Neo4j connection via the CRUD module
+    try:
+        driver = neo4j_crud.connect_to_neo4j(uri, user, password)
+    except ConnectionError as e:
+        print(e)
+        return
+
+    while True:
+        print_neo4j_menu()
+        choice = input("  Enter choice: ").strip()
+
+        # ── CRUD ──────────────────────────────────────────────────────────
+
+        if choice == "1":
+            # Load file records from Sample_Files.json and store as a graph
+            path = input(f"  File path [{data_filepath}]: ").strip() or data_filepath
+            records = neo4j_crud.load_github_data(path)
+            if records:
+                neo4j_crud.bulk_create_files(driver, records)
+
+        elif choice == "2":
+            # Read a single File node by its blob ID
+            file_id = input("  Enter file blob ID: ").strip()
+            result = neo4j_crud.read_file_node(driver, file_id)
+            if result:
+                print(f"\n  File found:")
+                print(f"    ID     : {result.get('id')}")
+                print(f"    Repo   : {result.get('repo')}")
+                print(f"    Branch : {result.get('ref')}")
+                print(f"    Path   : {result.get('path')}")
+                print(f"    Mode   : {result.get('mode')}")
+                print(f"    Symlink: {result.get('symlink') or 'N/A'}")
+            else:
+                print(f"  [WARN] File '{file_id}' not found.")
+
+        elif choice == "3":
+            # Update a single property on an existing File node
+            file_id = input("  Enter file blob ID to update: ").strip()
+            field   = input("  Field name to update (e.g. path, mode): ").strip()
+            value   = input("  New value: ").strip()
+            neo4j_crud.update_file_node(driver, file_id, field, value)
+
+        elif choice == "4":
+            # Delete a File node and all its relationships by blob ID
+            file_id = input("  Enter file blob ID to delete: ").strip()
+            neo4j_crud.delete_file_node(driver, file_id)
+
+        elif choice == "5":
+            # List stored file IDs and their paths from the graph
+            limit = input("  How many files to show? [20]: ").strip()
+            limit = int(limit) if limit.isdigit() else 20
+            files = neo4j_crud.list_files(driver, limit=limit)
+            print(f"\n  Stored files (showing up to {limit}):")
+            for file_id, path in files:
+                print(f"    {file_id[:12]}...  {path}")
+            if not files:
+                print("  No files stored yet.")
+
+        # ── FEATURES ──────────────────────────────────────────────────────
+
+        elif choice == "6":
+            # Feature 1: Top repositories ranked by number of tracked files
+            top_n = input("  How many top repos to show? [10]: ").strip()
+            top_n = int(top_n) if top_n.isdigit() else 10
+            neo4j_features.display_top_repos_by_file_count(driver, top_n)
+
+        elif choice == "7":
+            # Feature 2: Files with identical content shared across multiple repos
+            top_n = input("  How many shared files to show? [10]: ").strip()
+            top_n = int(top_n) if top_n.isdigit() else 10
+            neo4j_features.display_shared_files(driver, top_n)
+
+        elif choice == "8":
+            # Feature 3: Horizontal bar chart of repository file counts
+            top_n = input("  How many repos to visualize? [10]: ").strip()
+            top_n = int(top_n) if top_n.isdigit() else 10
+            neo4j_features.visualize_repo_file_counts(driver, top_n)
+
+        elif choice == "0":
+            # Close the driver connection cleanly before returning
+            driver.close()
+            print("\n  Returning to main menu...")
+            break
+
+        else:
+            print("  [WARN] Invalid choice. Please try again.")
+
+
 # ─────────────────────────────────────────
 #  ENTRY POINT
 # ─────────────────────────────────────────
