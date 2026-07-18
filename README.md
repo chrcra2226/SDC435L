@@ -5,32 +5,70 @@ Lab files for the class group project.
 
 This Python application integrates with multiple database technologies to store and analyze data from the GitHub Archive dataset (GitHubArchive-Dataset.zip). Each part of the project introduces a new database, building toward a comprehensive understanding of how different data storage systems handle the same real-world data.
 
-This is a five-part group project. Part 1 (Redis), Part 2 (MongoDB), and Part 3 (Cassandra) are fully implemented. Parts 4–5 are placeholders and will be completed in future weeks.
+This is a five-part group project. Part 1 (Redis), Part 2 (MongoDB), Part 3 (Cassandra), and Part 4 (Neo4j) are fully implemented. Part 5 is a placeholder and will be completed in the following week.
 
 | Part | Database  | Type                  | Status            |
 |------|-----------|-----------------------|-------------------|
 | 1    | Redis     | Key-Value (In-Memory) | Complete          |
 | 2    | MongoDB   | Document              | Complete          |
 | 3    | Cassandra | Wide-Column           | Complete          |
-| 4    | Neo4j     | Graph                 | Under Construction|
+| 4    | Neo4j     | Graph                 | Complete          |
 | 5    | SQLite    | Relational            | Under Construction|
 
 
 ### Dataset
+Each database uses a different file from the GitHubArchive-Dataset.zip:
 
-This application uses Commits.json from the provided GitHubArchive-Dataset.zip. Each line of the file is one JSON object describing a single Git commit, with fields including:
+|Database  |File             |Description|
+|----------|-----------------|--------------------------------------------|
+|Redis     |Commits.json     |GitHub commit records (SHA, author, message)|
+|MongoDB   |Sample_Repos.json|GitHub repository records (name, watch count)|
+|Cassandra |Licenses.json    |Repository license records (repo name, license)|
+|Neo4j     |Sample_Files.json|Repository file records (path, blob ID, branch)|
 
-| Field        | Description                                              |
-|--------------|------------------------------------------------------------|
-| `commit`     | The commit SHA — used as the unique Redis key              |
-| `author`     | `{ "name": ..., "email": ... }` — who wrote the commit      |
-| `committer`  | `{ "name": ..., "email": ... }` — who committed it          |
+This application uses multiple .json files from the provided GitHubArchive-Dataset.zip. Each line of the files is one JSON object describing a single dataset, with fields including:
+
+#### Commits.json Fields (Redis)
+
+| Field        | Description                                                         |
+|--------------|---------------------------------------------------------------------|
+| `commit`     | The commit SHA — used as the unique Redis key                       |
+| `author`     | `{ "name": ..., "email": ... }` — who wrote the commit              |
+| `committer`  | `{ "name": ..., "email": ... }` — who committed it                  |
 | `repo_name`  | A **list** containing the repository name(s), e.g. `["owner/repo"]` |
-| `message`    | The full commit message                                    |
-| `subject`    | The first line of the commit message                       |
-| `parent`     | A list of parent commit SHA(s)                              |
-| `tree`       | The tree SHA                                                |
-The dataset ZIP also includes several other files (Files.json, Contents.json, Languages.json, Licenses.json, and Sample_* variants) describing repository file listings, file contents, language breakdowns, and license info. These are not used by the current Redis implementation but are used in later phases such as MongoDB.
+| `message`    | The full commit message                                             |
+| `subject`    | The first line of the commit message                                |
+| `parent`     | A list of parent commit SHA(s)                                      |
+| `tree`       | The tree SHA                                                        |
+
+#### Sample_Repos.json Fields (MongoDB)
+
+| Field           | Description                                        |
+|-----------------|----------------------------------------------------|
+| `repo_name`     | Full repository name (e.g. `owner/repo`            |
+| `watch_count`   | Number of users watching the repositories          |
+| `language`      | Primary programming language of the repositories   |
+| `commits`       | Total number of commits in the repository          |
+
+#### Licenses.json Fields (Cassandra)
+
+| Field           | Description                                            |
+|-----------------|--------------------------------------------------------|
+| `repo_name`     | The repository the file belongs to (e.g. `owner/repo`) |
+| `license`       | The license type associated with the repository        |
+
+#### Sample_Files.json Fields (Neo4j)
+
+| Field           | Description                                                |
+|-----------------|------------------------------------------------------------|
+| `id`            | The blob SHA - Unique identifier for the file content      |
+| `repo_name`     | The repository the file belongs to (e.g. `owner/repo`)     |
+| `ref`           | The git branch refernce (e.g. `refs/heads/master`)         |
+| `path`          | The file path within the repository                        |
+| `mode`          | The file mode (e.g. `33188` for a regular file)            |
+| `symlink_target`| Symlink destination if the file is a symlink, else absent  |
+
+The dataset ZIP also includes all files used within the application and more (Files.json, Contents.json, Languages.json, Licenses.json, and Sample_* variants) that describe repository file listings, file contents, language breakdowns, and license info. These are not used by the current Redis implementation but are used in later phases such as MongoDB.
 
 ### Project Structure
 
@@ -50,6 +88,10 @@ project/
 
 ├── MenuCassandra.py      # Cassandra: Menu display
 
+├── neo4j_crud.py         # Neo4j: connection, data loading, CRUD operations
+
+├── neo4j_features.py     # Neo4j: three analytical features
+
 ├── README.md             # This file
 
 └── data/
@@ -58,7 +100,9 @@ project/
 
 ---├── Licenses.json      # Cassandra dataset (GitHub Licenses)
     
----└── Sample_repos.json  # MongoDB dataset (repositories)
+---├── Sample_repos.json  # MongoDB dataset (repositories)
+
+---└── Sample_Files.json  # Neo4j dataset (repository files)
 
 ### File Responsibilities
 
@@ -76,6 +120,10 @@ Cassandra.py — Handles Cassandra connection, keyspace and table creation, data
 
 MenuCassandra.py - Handles the menu functionality for Cassandra section
 
+neo4j_crud.py — Handles Neo4j driver connection, data loading from Sample_Files.json, and all four CRUD operations. Creates File, Repo, and Branch nodes with BELONGS_TO and ON_BRANCH relationships using MERGE to prevent duplicates.
+
+neo4j_features.py — Implements the three analytical features using Neo4j graph traversal: top repositories by file count, shared file detection across repositories, and a matplotlib bar chart visualization of repository file counts.
+
 ### Navigation Pathways
 
 #### Main Menu
@@ -90,7 +138,7 @@ python menu.py
 
 ├── 3. Cassandra  → Cassandra Submenu (fully implemented)
 
-├── 4. Neo4j      → "Option under construction"
+├── 4. Neo4j      → "Neo4j Submenu (fully implemented)"
 
 ├── 5. SQLite     → "Option under construction"
 
@@ -198,6 +246,35 @@ Cassandra Menu
 
 └── Back to main menu
 
+Neo4j Menu
+
+│
+
+├── CRUD Operations
+
+│     1. Load & store all files from Sample_Files.json
+
+│     2. Read a specific file by blob ID
+
+│     3. Update a file property
+
+│     4. Delete a file by blob ID
+
+│     5. List stored files
+
+│
+
+├── Features
+
+│     6. Top repositories by file count
+
+│     7. Shared files across repositories
+
+│     8. Visualize repository file counts
+
+│
+
+└── 0. Back to main menu
 
 ## Part 1 — Redis Features
 
@@ -324,7 +401,6 @@ Keyspace: github_license_db
 
 Table: repositories
 
-FieldTypeDescriptioniduuidAuto-generated unique identifier (PRIMARY KEY)repo_nametextFull repository name (e.g. owner/repo)licensetextLicense type associated with the repository
 | Field        | Type   | Description                                   |
 |--------------|--------|-----------------------------------------------|
 | `id`         | uuid   | Auto-generated unique identifier (PRIMARY KEY)|
@@ -340,6 +416,58 @@ FieldTypeDescriptioniduuidAuto-generated unique identifier (PRIMARY KEY)repo_nam
 | Storage Model  | Wide-column NoSQL storage            |
 | Analytics      | Python-side aggregation with Counter |
 
+## Part 4 — Neo4j Features
+
+### CRUD Operations
+
+Create — Load file records from Sample_Files.json and store them as a graph with File, Repo, and Branch nodes
+
+Read — Retrieve a specific file node and its connected Repo and Branch nodes by blob ID
+
+Update — Modify a property on an existing File node by blob ID
+
+Delete — Remove a File node and all its relationships by blob ID
+
+List — Display stored file IDs and their paths from the graph
+
+### Analytical Features
+
+Feature 1 — Top Repositories by File Count
+Traverses (:File)-[:BELONGS_TO]->(:Repo) relationships to rank repositories by the number of tracked files they contain.
+
+Feature 2 — Shared File Detection Across Repositories
+Finds File nodes whose blob ID (content hash) appears in more than one repository, revealing files with identical content shared across different projects. This is a uniquely graph-friendly query that would be expensive in a relational database.
+
+Feature 3 — Repository File Count Visualization
+Uses matplotlib to render a horizontal bar chart of the top N most file-rich repositories in the dataset.
+
+### Neo4j Data Model
+
+#### Nodes:
+
+Label |Properties             |Description
+|------|-----------------------|-------------------------------------|
+|File  |id, path, mode, symlink|A file tracked in a GitHub repository|
+|Repo  |name                   |A GitHub repository                  |
+|Branch|ref                    |A git branch reference               |
+
+#### Relationships:
+
+|Relationship|From|To    |Description                       |
+|------------|----|------|----------------------------------|
+|BELONGS_TO  |File|Repo  |The file exists in this repository|
+|ON_BRANCH   |File|Branch|The file is on this branch        |
+
+
+### Neo4j Technology Stack
+
+| Component      | Details                                  |
+|----------------|------------------------------------------|
+| Database       | Neo4j 5.0+ (Desktop or Community Edition)|
+| Python Driver  | `neo4j`                                  |
+| Storage Model  | Graph (nodes and directed relationships) |
+| Analytics      | Cypher graph traversal + matplotlib      |
+
 ## Dependencies
 
 ### Install required packages:
@@ -350,23 +478,33 @@ pip install pymongo
 
 pip install cassandra-driver
 
+pip install neo4j
+
 pip install matplotlib
 
 ## Setup & Running the Application
 
-1. Start database servers
+### 1. Start database servers
 
-Redis And MongoDB:
+#### Redis And MongoDB:
+
 Servers connect when corresponding database is selected.
 
-Cassandra:
-sudo systemctl start cassandra
+#### Cassandra (Ubuntu only):
 
-2. Run application from within Project folder
+`sudo systemctl start cassandra`
 
-cd SDC435L-main/Project
+#### Neo4j:
 
-python3 menu.py
+Windows — Start the database in Neo4j Desktop and ensure status shows "Started"
+
+Ubuntu — `sudo systemctl start neo4j`
+
+### 2. Run application from within Project folder
+
+`cd SDC435L-main/Project`
+
+`python3 menu.py`
 
 ## Recommended Workflow
 
@@ -392,6 +530,15 @@ Cassandra:
 - Run analytics features (options 5-7)
 - View record count (option 8)
 
+Neo4j:
+
+- Ensure Neo4j server is running before selecting this option
+- Select option 4
+- Enter connection details when prompted (URI, username, password)
+- Select option 1 to load Sample_Files.json into the graph
+- Run CRUD operations (options 2–5)
+- Run analytics features (options 6–8)
+
 Team Members
 
 Christopher Crayton, Elvis Ngawe, Michael Winstead
@@ -401,5 +548,6 @@ Notes
 - Redis uses JSON string storage with sorted sets for analytics
 - MongoDB uses document storage with aggregation pipelines
 - Cassandra uses a wide-column keyspace with uuid primary keys and Python-side analytics
+- Neo4j uses a graph model with directed relationships between File, Repo, and Branch nodes
 - Both Redis and MongoDB analyze GitHub commit and repository data; Cassandra analyzes repository license data
-- Future phases will add Neo4j, and SQLite implementations
+- Future phases will add SQLite implementations
