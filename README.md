@@ -5,7 +5,7 @@ Lab files for the class group project.
 
 This Python application integrates with multiple database technologies to store and analyze data from the GitHub Archive dataset (GitHubArchive-Dataset.zip). Each part of the project introduces a new database, building toward a comprehensive understanding of how different data storage systems handle the same real-world data.
 
-This is a five-part group project. Part 1 (Redis), Part 2 (MongoDB), Part 3 (Cassandra), and Part 4 (Neo4j) are fully implemented. Part 5 is a placeholder and will be completed in the following week.
+This is a five-part group project with all five parts being fully implemented
 
 | Part | Database  | Type                  | Status            |
 |------|-----------|-----------------------|-------------------|
@@ -13,18 +13,19 @@ This is a five-part group project. Part 1 (Redis), Part 2 (MongoDB), Part 3 (Cas
 | 2    | MongoDB   | Document              | Complete          |
 | 3    | Cassandra | Wide-Column           | Complete          |
 | 4    | Neo4j     | Graph                 | Complete          |
-| 5    | SQLite    | Relational            | Under Construction|
+| 5    | SQLite    | Relational            | Complete          |
 
 
 ### Dataset
 Each database uses a different file from the GitHubArchive-Dataset.zip:
 
 |Database  |File             |Description|
-|----------|-----------------|--------------------------------------------|
-|Redis     |Commits.json     |GitHub commit records (SHA, author, message)|
-|MongoDB   |Sample_Repos.json|GitHub repository records (name, watch count)|
-|Cassandra |Licenses.json    |Repository license records (repo name, license)|
-|Neo4j     |Sample_Files.json|Repository file records (path, blob ID, branch)|
+|----------|-------------------|--------------------------------------------|
+|Redis     |Commits.json       |GitHub commit records (SHA, author, message)|
+|MongoDB   |Sample_Repos.json  |GitHub repository records (name, watch count)|
+|Cassandra |Licenses.json      |Repository license records (repo name, license)|
+|Neo4j     |Sample_Files.json  |Repository file records (path, blob ID, branch)|
+|SQLite    |Sample_Commits.json|GitHub commit records with file change details (SHA, author, repo, files changed)|
 
 This application uses multiple .json files from the provided GitHubArchive-Dataset.zip. Each line of the files is one JSON object describing a single dataset, with fields including:
 
@@ -68,7 +69,20 @@ This application uses multiple .json files from the provided GitHubArchive-Datas
 | `mode`          | The file mode (e.g. `33188` for a regular file)            |
 | `symlink_target`| Symlink destination if the file is a symlink, else absent  |
 
-The dataset ZIP also includes all files used within the application and more (Files.json, Contents.json, Languages.json, Licenses.json, and Sample_* variants) that describe repository file listings, file contents, language breakdowns, and license info. These are not used by the current Redis implementation but are used in later phases such as MongoDB.
+#### Sample_Commits.json Fields (SQLite)
+
+| Field        | Description                                                         |
+|--------------|---------------------------------------------------------------------|
+| `commit`     | The commit SHA — used as the unique Redis key                       |
+| `author`     | `{ "name": ..., "email": ... }` — who wrote the commit              |
+| `committer`  | `{ "name": ..., "email": ... }` — who committed it                  |
+| `repo_name`  | The repository name as a plain string (e.g. `owner/repo`) |
+| `message`    | The full commit message                                             |
+| `subject`    | The first line of the commit message                                |
+| `difference` | List of file changes — each entry has new_path, old_path, new_mode, old_mode|
+| `tree`       | The tree SHA                                                        |
+
+The dataset ZIP also includes all files used within the application and more (Files.json, Contents.json, Languages.json, Licenses.json, and Sample_* variants) that describe repository file listings, file contents, language breakdowns, and license info.
 
 ### Project Structure
 
@@ -92,6 +106,10 @@ project/
 
 ├── neo4j_features.py     # Neo4j: three analytical features
 
+├── sqlite_crud.py        # SQLite: connection, data loading, CRUD operations
+
+├── sqlite_features.py    # SQLite: three analytical features
+
 ├── README.md             # This file
 
 └── data/
@@ -102,7 +120,13 @@ project/
     
 ---├── Sample_repos.json  # MongoDB dataset (repositories)
 
----└── Sample_Files.json  # Neo4j dataset (repository files)
+---├── Sample_Files.json  # Neo4j dataset (repository files)
+
+---├── Sample_Commits.json # SQLite dataset (GitHub commits with file changes)
+
+---└── databases/
+
+------└── github_archive.db # SQLite database file (auto-created on first run)
 
 ### File Responsibilities
 
@@ -124,6 +148,10 @@ neo4j_crud.py — Handles Neo4j driver connection, data loading from Sample_File
 
 neo4j_features.py — Implements the three analytical features using Neo4j graph traversal: top repositories by file count, shared file detection across repositories, and a matplotlib bar chart visualization of repository file counts.
 
+sqlite_crud.py — Handles SQLite database creation and schema setup using Python's built-in sqlite3 module. Loads commit data from Sample_Commits.json and performs all four CRUD operations on the commits table. The files_changed column is derived from the length of the difference array in each commit record.
+
+sqlite_features.py — Implements the three analytical features using SQL aggregation: top repositories by total files changed, most prolific authors by commit count, and a matplotlib bar chart of commit activity per repository.
+
 ### Navigation Pathways
 
 #### Main Menu
@@ -140,7 +168,7 @@ python menu.py
 
 ├── 4. Neo4j      → "Neo4j Submenu (fully implemented)"
 
-├── 5. SQLite     → "Option under construction"
+├── 5. SQLite     → "SQLite Submenu (fully implemented)"
 
 └── 0. Exit
 
@@ -271,6 +299,38 @@ Neo4j Menu
 │     7. Shared files across repositories
 
 │     8. Visualize repository file counts
+
+│
+
+└── 0. Back to main menu
+
+#### SQLite Submenu
+
+SQLite Menu
+
+│
+
+├── CRUD Operations
+
+│ 1. Load & store all commits from Sample_Commits.json
+
+│ 2. Read a specific commit by SHA
+
+│ 3. Update a commit field
+
+│ 4. Delete a commit by SHA
+
+│ 5. List stored commits
+
+│
+
+├── Features
+
+│ 6. Top repositories by files changed
+
+│ 7. Most prolific authors
+
+│ 8. Visualize commit activity
 
 │
 
@@ -468,6 +528,54 @@ Label |Properties             |Description
 | Storage Model  | Graph (nodes and directed relationships) |
 | Analytics      | Cypher graph traversal + matplotlib      |
 
+## Part 5 — SQLite Features
+
+### CRUD Operations
+
+Create — Load commit records from Sample_Commits.json into the SQLite commits table using batch inserts
+
+Read — Retrieve a single commit row by SHA including repo, author, subject, and files changed count
+
+Update — Modify any non-primary-key column on an existing commit row by SHA
+
+Delete — Remove a commit row from the commits table by SHA
+
+List — Display stored commit SHAs and their subjects
+
+### Analytical Features
+
+Feature 1 — Top Repositories by Files Changed Queries the commits table using SUM(files_changed) grouped by repo_name to rank repositories by total file activity across all their commits.
+
+Feature 2 — Most Prolific Authors Groups commits by author_name and counts the number of commits per author to identify the most active contributors in the dataset.
+
+Feature 3 — Commit Activity Visualization Uses matplotlib to render a horizontal bar chart of the top N most active repositories by commit count.
+
+## SQLite Data Model
+
+Database file: data/databases/github_archive.db
+
+Table: commits
+
+| Field          | Type    | Description                                               |
+|----------------|---------|-----------------------------------------------------------|
+| `sha`          | TEXT    | Commit SHA — unique primary key                           |
+| `repo_name`    | TEXT    | Full repository name (e.g. owner/repo)                    |
+| `author_name`  | TEXT    | Name of the commit author                                 |
+| `author_email` | TEXT    | Email of the commit author                                |
+| `subject`      | TEXT    | First line of the commit message                          |
+| `message`      | TEXT    | Full commit message                                       |
+| `tree`         | TEXT    | The tree SHA                                              |
+| `files_changed`| INTEGER | Number of files changed — derived from difference array   |
+
+## SQLite Technology Stack
+
+| Component      | Details                                  |
+|----------------|------------------------------------------|
+| Database       | SQLite 3 (built into Python)             |
+| Python Driver  | sqlite3 (Python standard library)        |
+| Storage Model  | Relational table with SQL aggregation    |
+| Analytics      | SQL GROUP BY + SUM/COUNT + matplotlib    |
+
 ## Dependencies
 
 ### Install required packages:
@@ -481,6 +589,8 @@ pip install cassandra-driver
 pip install neo4j
 
 pip install matplotlib
+
+No additional install needed for SQLite — sqlite3 is built into Python 3
 
 ## Setup & Running the Application
 
@@ -498,7 +608,11 @@ Servers connect when corresponding database is selected.
 
 Windows — Start the database in Neo4j Desktop and ensure status shows "Started"
 
-Ubuntu — `sudo systemctl start neo4j`
+Ubuntu — `sudo systemctl start neo4j` if installed on OS
+
+#### SQLite:
+
+No server required — the database file is created automatically at data/databases/github_archive.db on first run.
 
 ### 2. Run application from within Project folder
 
@@ -508,21 +622,21 @@ Ubuntu — `sudo systemctl start neo4j`
 
 ## Recommended Workflow
 
-Redis:
+### Redis:
 
 - Select option 1
 - Select option 1 on Redis Menu
 - Loads Commits.json
 - Run CRUD and analytic features (options 2–9)
 
-MongoDB:
+### MongoDB:
 
 - Select option 2
 - Select option 1 on MongoDB Menu
 - Loads Sample_repos.json
 - Run CRUD and analytics features (options 2-8)
 
-Cassandra:
+### Cassandra:
 
 - Select option 3
 - Licenses.json is loaded automatically on startup
@@ -530,7 +644,7 @@ Cassandra:
 - Run analytics features (options 5-7)
 - View record count (option 8)
 
-Neo4j:
+### Neo4j:
 
 - Ensure Neo4j server is running before selecting this option
 - Select option 4
@@ -539,15 +653,25 @@ Neo4j:
 - Run CRUD operations (options 2–5)
 - Run analytics features (options 6–8)
 
-Team Members
+### SQLite:
+
+- Select option 5
+- Select option 1 to load Sample_Commits.json into the SQLite database
+- Run CRUD operations (options 2–5)
+- Run analytics features (options 6–8)
+- Database file is saved automatically at data/databases/github_archive.db
+
+## Team Members
 
 Christopher Crayton, Elvis Ngawe, Michael Winstead
 
-Notes
+## Notes
 
 - Redis uses JSON string storage with sorted sets for analytics
 - MongoDB uses document storage with aggregation pipelines
 - Cassandra uses a wide-column keyspace with uuid primary keys and Python-side analytics
 - Neo4j uses a graph model with directed relationships between File, Repo, and Branch nodes
 - Both Redis and MongoDB analyze GitHub commit and repository data; Cassandra analyzes repository license data
-- Future phases will add SQLite implementations
+- SQLite uses Python's built-in sqlite3 module — no server or driver install required
+- The SQLite database is stored as a local file at data/databases/github_archive.db
+- All five database integrations are now complete
