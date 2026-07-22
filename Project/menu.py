@@ -14,7 +14,7 @@ Structure:
                 2. MongoDB    (fully implemented)
                 3. Cassandra  (fully implemented)
                 4. Neo4j      (fully implemented)
-                5. SQLite     (coming soon)
+                5. SQLite     (fully implemented)
                 0. Exit
 
   Redis Submenu → CRUD operations + 3 analytical features
@@ -32,6 +32,10 @@ Structure:
   Neo4j Submenu → CRUD operations + 3 analytical features
     CRUD calls    → neo4j_crud.py
     Feature calls → neo4j_features.py
+
+  SQLite Submenu → CRUD operations + 3 analytical features
+    CRUD calls    → sqlite_crud.py
+    Feature calls → sqlite_features.py
     
 Usage:
   python menu.py
@@ -87,9 +91,8 @@ def run_app():
             # Neo4j — fully implemented
             run_neo4j_menu()
         elif choice == "5":
-            # SQLite — not yet implemented
-            print(f"\n  [Option under construction] SQLite coming soon.")
-            print("  Returning to main menu...")
+            # SQLite — fully implemented
+            run_sqlite_menu()
 
         elif choice == "0":
             print("\n  Goodbye!\n")
@@ -890,7 +893,133 @@ def run_neo4j_menu(data_filepath="data/Sample_Files.json"):
         else:
             print("  [WARN] Invalid choice. Please try again.")
 
-
+# ─────────────────────────────────────────
+#  SQLITE SUBMENU
+# ─────────────────────────────────────────
+ 
+def print_sqlite_menu():
+    """Display the SQLite-specific CRUD and features submenu."""
+    print("\n" + "=" * 55)
+    print("   SQLite — GitHub Commit Activity")
+    print("=" * 55)
+    print("  CRUD Operations:")
+    print("    1. Load & store all commits from Sample_Commits.json")
+    print("    2. Read a specific commit by SHA")
+    print("    3. Update a commit field")
+    print("    4. Delete a commit by SHA")
+    print("    5. List stored commits")
+    print()
+    print("  Features:")
+    print("    6. [Feature 1] Top repositories by files changed")
+    print("    7. [Feature 2] Most prolific authors")
+    print("    8. [Feature 3] Visualize commit activity")
+    print()
+    print("    0. Back to main menu")
+    print("=" * 55)
+ 
+ 
+def run_sqlite_menu(data_filepath="data/Sample_Commits.json"):
+    """
+    Connect to SQLite and run the SQLite submenu loop.
+    Returns to the main menu when the user enters 0.
+ 
+    SQLite requires no server — the database is a local file created
+    automatically on first connection. No credentials are needed.
+ 
+    Args:
+        data_filepath (str): Default path to the commit data file
+                             (Sample_Commits.json from GitHubArchive-Dataset.zip).
+    """
+    try:
+        import sqlite_crud
+        import sqlite_features
+ 
+        # Connect to (or create) the SQLite database file — no server needed
+        conn = sqlite_crud.connect_to_sqlite()
+ 
+    except Exception as e:
+        print("\n [ERROR] Failed to connect to SQLite.")
+        print(f" Details: {e}")
+        return
+ 
+    while True:
+        print_sqlite_menu()
+        choice = input("  Enter choice: ").strip()
+ 
+        # ── CRUD ──────────────────────────────────────────────────────────
+ 
+        if choice == "1":
+            # Load commit records from Sample_Commits.json and insert into SQLite
+            path = input(f"  File path [{data_filepath}]: ").strip() or data_filepath
+            records = sqlite_crud.load_github_data(path)
+            if records:
+                sqlite_crud.bulk_create_commits(conn, records)
+ 
+        elif choice == "2":
+            # Read a single commit row by its SHA
+            sha = input("  Enter commit SHA: ").strip()
+            result = sqlite_crud.read_commit(conn, sha)
+            if result:
+                print(f"\n  Commit found:")
+                print(f"    SHA          : {result.get('sha')}")
+                print(f"    Repo         : {result.get('repo_name')}")
+                print(f"    Author       : {result.get('author_name')}")
+                print(f"    Subject      : {result.get('subject')}")
+                print(f"    Files Changed: {result.get('files_changed')}")
+            else:
+                print(f"  [WARN] Commit '{sha}' not found.")
+ 
+        elif choice == "3":
+            # Update a single column on an existing commit row
+            sha   = input("  Enter commit SHA to update: ").strip()
+            field = input("  Field to update (repo_name, author_name, subject, etc.): ").strip()
+            value = input("  New value: ").strip()
+            sqlite_crud.update_commit(conn, sha, field, value)
+ 
+        elif choice == "4":
+            # Delete a commit row by SHA
+            sha = input("  Enter commit SHA to delete: ").strip()
+            sqlite_crud.delete_commit(conn, sha)
+ 
+        elif choice == "5":
+            # List stored commit SHAs and their subjects
+            limit = input("  How many commits to show? [20]: ").strip()
+            limit = int(limit) if limit.isdigit() else 20
+            commits = sqlite_crud.list_commits(conn, limit=limit)
+            print(f"\n  Stored commits (showing up to {limit}):")
+            for sha, subject in commits:
+                print(f"    {sha[:12]}...  {subject[:60]}")
+            if not commits:
+                print("  No commits stored yet.")
+ 
+        # ── FEATURES ──────────────────────────────────────────────────────
+ 
+        elif choice == "6":
+            # Feature 1: Top repositories by total files changed across all commits
+            top_n = input("  How many top repos to show? [10]: ").strip()
+            top_n = int(top_n) if top_n.isdigit() else 10
+            sqlite_features.display_top_repos_by_files_changed(conn, top_n)
+ 
+        elif choice == "7":
+            # Feature 2: Most prolific authors ranked by total commit count
+            top_n = input("  How many top authors to show? [10]: ").strip()
+            top_n = int(top_n) if top_n.isdigit() else 10
+            sqlite_features.display_top_authors(conn, top_n)
+ 
+        elif choice == "8":
+            # Feature 3: Horizontal bar chart of commit counts per repository
+            top_n = input("  How many repos to visualize? [10]: ").strip()
+            top_n = int(top_n) if top_n.isdigit() else 10
+            sqlite_features.visualize_commit_activity(conn, top_n)
+ 
+        elif choice == "0":
+            # Close the SQLite connection cleanly before returning
+            conn.close()
+            print("\n  Returning to main menu...")
+            break
+ 
+        else:
+            print("  [WARN] Invalid choice. Please try again.")
 # ─────────────────────────────────────────
 #  ENTRY POINT
 # ─────────────────────────────────────────
